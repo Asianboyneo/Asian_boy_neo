@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <!-- iOS 視口優化: 確保覆蓋整個螢幕，包含瀏海區域 -->
+    <!-- iOS 視口優化 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Cosmic Particles (Unified Space Glass UI)</title>
     
@@ -495,7 +495,10 @@
             scene.fog = new THREE.FogExp2(0x020205, 0.0015);
 
             camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
-            camera.position.set(0, 0, 150);
+            
+            // 修改：初始位置設為非常近 (Z=10) 產生放大效果
+            camera.position.set(0, 0, 10); 
+            
             camera.lookAt(0, 0, 0);
 
             renderer = new THREE.WebGLRenderer({ 
@@ -594,7 +597,7 @@
             img.crossOrigin = "Anonymous"; 
             img.onload = function() {
                 console.log("Default image loaded successfully.");
-                processImageToParticles(img);
+                processImageToParticles(img, true); // 傳入 true 表示是初始載入
                 if(statusText) statusText.textContent = "Camera Standby";
             };
             img.onerror = function() {
@@ -605,7 +608,8 @@
             img.src = DEFAULT_IMAGE_PATH;
         }
 
-        function processImageToParticles(img) {
+        // 修改：加入 isInit 參數
+        function processImageToParticles(img, isInit = false) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
@@ -635,8 +639,12 @@
 
             generateParticles(params.count, currentImageData);
             
-            camera.position.set(0, 0, 120);
-            controls.reset();
+            // 修改：只有在非初始載入時才強制重置相機位置
+            // 這樣可以保留初始的縮放動畫 (從 Z=10 平滑移動到 Z=150)
+            if (!isInit) {
+                camera.position.set(0, 0, 150);
+                controls.reset();
+            }
         }
 
         function initUI() {
@@ -683,7 +691,7 @@
                 reader.onload = function(event) {
                     const img = new Image();
                     img.onload = function() {
-                        processImageToParticles(img);
+                        processImageToParticles(img, false); // 手動上傳非初始載入
                     };
                     img.src = event.target.result;
                 };
@@ -959,7 +967,8 @@
                     particles.rotation.y += (targetRotationY - particles.rotation.y) * 0.08;
                     particles.rotation.x += (targetRotationX - particles.rotation.x) * 0.08;
                 }
-                camera.position.z += (targetCameraZ - camera.position.z) * 0.1;
+                // 手勢控制時，更新 targetCameraZ 並平滑移動 (注意：這裡不直接修改 z，而是與下方全域 z 更新合併)
+                // 其實手勢改變的是 targetCameraZ，下方的全域更新會處理它
             } else {
                 // --- 待機隨機漂浮動畫 ---
                 if(particles && params.floating) {
@@ -977,6 +986,10 @@
                     particles.rotation.y += (targetY - particles.rotation.y) * 0.02;
                 }
             }
+
+            // 修改：全域相機 Z 軸平滑移動
+            // 無論有無手勢，都執行這行，以實現開場動畫 (從 5 到 150) 和手勢縮放 (目標變更)
+            camera.position.z += (targetCameraZ - camera.position.z) * 0.04;
 
             composer.render();
         }
