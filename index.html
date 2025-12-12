@@ -54,7 +54,7 @@
             
             color: rgba(255, 255, 255, 0.95);
             z-index: 10;
-            pointer-events: none;
+            pointer-events: none; /* 讓整個面板不阻擋滑鼠，但子元素要開啟 */
             
             /* 太空感深色半透明背景 */
             background: rgba(20, 25, 40, 0.4); 
@@ -74,6 +74,11 @@
                 inset 0 0 0 1px rgba(255, 255, 255, 0.05);
             
             transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        
+        /* 讓面板內的互動元素可以被點擊 */
+        #ui-layer > * {
+            pointer-events: auto;
         }
 
         h1 {
@@ -100,12 +105,12 @@
             border-radius: 2px;
         }
 
-        /* --- 新增：面板內的社群按鈕列 --- */
+        /* --- 面板內的社群按鈕列 --- */
         .social-row {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px; /* 與下方內容保持距離 */
-            pointer-events: auto; /* 恢復點擊事件 */
+            margin-bottom: 15px; 
+            pointer-events: auto; 
         }
 
         .social-btn {
@@ -131,7 +136,6 @@
             border-color: rgba(165, 180, 252, 0.4);
         }
 
-        /* 個別品牌顏色微調 (Hover 時) */
         .social-btn:hover .fa-instagram { color: #e1306c; }
         .social-btn:hover .fa-youtube { color: #ff0000; }
         .social-btn:hover .fa-threads { color: #fff; } 
@@ -151,7 +155,64 @@
             text-shadow: 0 0 15px rgba(165, 180, 252, 0.4);
         }
 
-        /* --- lil-gui 太空毛玻璃風格完全覆蓋 --- */
+        /* --- 底部資訊與按鈕列 --- */
+        .ui-footer-row {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .view-count-container {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            display: flex;
+            align-items: center;
+        }
+        
+        .view-count-num {
+            color: #a5b4fc;
+            font-weight: 600;
+            margin-left: 6px;
+            text-shadow: 0 0 8px rgba(165, 180, 252, 0.4);
+        }
+
+        /* Reset 按鈕樣式 */
+        .reset-btn {
+            background: transparent;
+            border: 1px solid rgba(165, 180, 252, 0.3);
+            color: rgba(165, 180, 252, 0.8);
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            outline: none;
+            pointer-events: auto; /* 確保按鈕可點擊 */
+        }
+
+        .reset-btn:hover {
+            background: rgba(165, 180, 252, 0.15);
+            color: #fff;
+            border-color: #a5b4fc;
+            box-shadow: 0 0 12px rgba(165, 180, 252, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .reset-btn:active {
+            transform: translateY(0);
+        }
+
+        /* --- lil-gui 太空毛玻璃風格 --- */
         .lil-gui { 
             --background-color: rgba(20, 25, 40, 0.4);
             --text-color: rgba(255, 255, 255, 0.95);
@@ -256,31 +317,13 @@
             padding-top: 12px;
         }
 
-        .view-count-container {
-            margin-top: 12px;
-            padding-top: 10px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.6);
-            display: flex;
-            align-items: center;
-        }
-        
-        .view-count-num {
-            color: #a5b4fc;
-            font-weight: 600;
-            margin-left: 6px;
-            text-shadow: 0 0 8px rgba(165, 180, 252, 0.4);
-        }
-
-        /* --- 手機版響應式優化 (Mobile Responsive) --- */
+        /* --- 手機版響應式優化 --- */
         @media (max-width: 600px) {
-            /* 1. 左下角 PARTICLE VISION 面板 (更小、更靠邊) */
             #ui-layer {
                 bottom: 20px;
-                bottom: calc(20px + env(safe-area-inset-bottom)); /* 避開 Home Bar */
+                bottom: calc(20px + env(safe-area-inset-bottom));
                 left: 10px;
-                width: calc(100% - 20px); /* 滿版但留小邊距 */
+                width: calc(100% - 20px);
                 padding: 15px;            
                 border-radius: 16px;
             }
@@ -291,7 +334,6 @@
                 padding-bottom: 8px;
             }
             
-            /* 社群按鈕在手機上稍微縮小 */
             .social-btn {
                 width: 30px;
                 height: 30px;
@@ -303,9 +345,8 @@
                 gap: 8px;
             }
             
-            #ui-layer p, .view-count-container {
+            #ui-layer p, .view-count-container, .reset-btn {
                 font-size: 0.8rem;
-                margin: 4px 0;
             }
             
             .divider {
@@ -313,16 +354,15 @@
                 padding-top: 8px;
             }
 
-            /* 2. 右上角 Control Center (縮小寬度) */
             .lil-gui.autoPlace {
                 top: 15px !important;
                 right: 15px !important;
-                max-width: 160px; /* 強制最大寬度 */
+                max-width: 160px;
             }
             
             .lil-gui {
-                --width: 160px; /* 變數控制寬度 */
-                font-size: 11px; /* 字體再小一點 */
+                --width: 160px;
+                font-size: 11px;
             }
             
             .lil-gui .title {
@@ -359,7 +399,7 @@
     <div id="ui-layer">
         <h1>ASIAN BOY VISION</h1>
         
-        <!-- 社群按鈕整合至此 -->
+        <!-- 社群按鈕 -->
         <div class="social-row">
             <a href="https://www.instagram.com/asian_boy_neo" target="_blank" class="social-btn" title="Instagram">
                 <i class="fab fa-instagram"></i>
@@ -377,16 +417,22 @@
 
         <p><span id="cam-status" class="status-dot"></span><span id="status-text">Camera Standby</span></p>
         
-        <!-- 預設隱藏的操作說明 -->
+        <!-- 操作說明 (開啟相機後顯示) -->
         <div class="divider" id="gesture-instructions" style="display: none;">
             <p>🖐️ <span class="highlight">Move</span> to Rotate</p>
             <p>👋 <span class="highlight">Distance</span> to Zoom</p>
             <p>👌 <span class="highlight">Pinch</span> to Explode</p>
         </div>
         
-        <!-- 瀏覽次數顯示 -->
-        <div class="view-count-container">
-            <i class="fas fa-eye" style="margin-right: 5px;"></i> Views: <span id="view-counter" class="view-count-num">---</span>
+        <!-- 底部區域：瀏覽次數 (左) + Reset 按鈕 (右) -->
+        <div class="ui-footer-row">
+            <div class="view-count-container">
+                <i class="fas fa-eye" style="margin-right: 5px;"></i> Views: <span id="view-counter" class="view-count-num">---</span>
+            </div>
+            
+            <button id="btn-reset" class="reset-btn" title="Reset View">
+                <i class="fas fa-sync-alt"></i> Reset
+            </button>
         </div>
     </div>
 
@@ -417,9 +463,30 @@
         
         let cameraUtils; 
         let isCameraActive = false; 
+        
+        // 開場動畫狀態旗標
+        let isIntroAnimation = true;
 
         // 預設圖片路徑
         const DEFAULT_IMAGE_PATH = '287069905_564270111773809_6459526836966162411_n.jpg';
+
+        // --- 新增：隨機設定相機發射位置的輔助函式 ---
+        function setRandomLaunchPosition() {
+            // 設定一個極遠的半徑範圍 (例如 2000~3000)
+            const r = 2000 + Math.random() * 1000;
+            
+            // 球面座標隨機取點
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos((Math.random() * 2) - 1);
+            
+            // 轉換為笛卡兒座標 (X, Y, Z)
+            camera.position.x = r * Math.sin(phi) * Math.cos(theta);
+            camera.position.y = r * Math.sin(phi) * Math.sin(theta);
+            camera.position.z = r * Math.cos(phi);
+            
+            // 確保相機一開始就看著中心，避免迷失方向
+            camera.lookAt(0, 0, 0);
+        }
 
         const params = {
             count: 80000,          
@@ -435,7 +502,7 @@
 
                 const statusDot = document.getElementById('cam-status');
                 const statusText = document.getElementById('status-text');
-                const instructions = document.getElementById('gesture-instructions'); // 獲取說明區塊
+                const instructions = document.getElementById('gesture-instructions');
 
                 if (isCameraActive) {
                     cameraUtils.stop();
@@ -445,7 +512,6 @@
                     statusDot.className = 'status-dot status-inactive';
                     statusText.textContent = "Sensors Offline";
                     
-                    // 關閉相機時隱藏說明
                     if(instructions) instructions.style.display = 'none';
                 } else {
                     cameraUtils.start().then(() => {
@@ -453,7 +519,6 @@
                         statusDot.className = 'status-dot status-active';
                         statusText.textContent = "Sensors Active";
                         
-                        // 開啟相機後顯示說明
                         if(instructions) instructions.style.display = 'block';
                     });
                     statusDot.className = 'status-dot'; 
@@ -464,13 +529,24 @@
                 document.getElementById('file-input').click();
             },
             resetView: function() {
-                camera.position.set(0, 0, 150);
-                camera.lookAt(0, 0, 0);
-                controls.reset();
-                if (particles) particles.rotation.set(0, 0, 0);
+                // 重置旋轉目標變數
                 targetRotationX = 0;
                 targetRotationY = 0;
                 targetCameraZ = 150;
+                
+                // 重置粒子本身的旋轉角度
+                if (particles) particles.rotation.set(0, 0, 0);
+
+                // --- 觸發開場穿梭特效邏輯 (修改為隨機角度) ---
+                // 1. 設定隨機發射位置
+                setRandomLaunchPosition();
+                
+                // 2. 重置控制器並暫時鎖定
+                controls.reset();
+                controls.enabled = false;
+                
+                // 3. 開啟動畫旗標
+                isIntroAnimation = true;
             }
         };
         
@@ -494,12 +570,10 @@
             scene.background = new THREE.Color(0x020205); 
             scene.fog = new THREE.FogExp2(0x020205, 0.0015);
 
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 20000); 
             
-            // 修改：初始位置設為非常近 (Z=10) 產生放大效果
-            camera.position.set(0, 0, 10); 
-            
-            camera.lookAt(0, 0, 0);
+            // 修改處：初始位置改為隨機角度
+            setRandomLaunchPosition();
 
             renderer = new THREE.WebGLRenderer({ 
                 antialias: false, 
@@ -534,6 +608,9 @@
             controls.maxPolarAngle = Math.PI * 0.75;
             controls.minPolarAngle = Math.PI * 0.25;
             controls.enableTouch = true;
+            
+            // 開場動畫期間暫停控制，避免衝突
+            controls.enabled = false;
 
             window.addEventListener('resize', onWindowResize);
             
@@ -597,7 +674,7 @@
             img.crossOrigin = "Anonymous"; 
             img.onload = function() {
                 console.log("Default image loaded successfully.");
-                processImageToParticles(img, true); // 傳入 true 表示是初始載入
+                processImageToParticles(img, true); 
                 if(statusText) statusText.textContent = "Camera Standby";
             };
             img.onerror = function() {
@@ -608,7 +685,6 @@
             img.src = DEFAULT_IMAGE_PATH;
         }
 
-        // 修改：加入 isInit 參數
         function processImageToParticles(img, isInit = false) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -639,22 +715,40 @@
 
             generateParticles(params.count, currentImageData);
             
-            // 修改：只有在非初始載入時才強制重置相機位置
-            // 這樣可以保留初始的縮放動畫 (從 Z=10 平滑移動到 Z=150)
             if (!isInit) {
-                camera.position.set(0, 0, 150);
+                // 修改處：上傳圖片後，使用隨機角度發射
+                setRandomLaunchPosition();
+                
+                // 重置粒子旋轉，讓新圖片從正面開始
+                if (particles) particles.rotation.set(0, 0, 0);
+                targetRotationX = 0;
+                targetRotationY = 0;
+
                 controls.reset();
+                controls.enabled = false; // 動畫期間暫時鎖定控制
+                
+                isIntroAnimation = true; // 重新啟動穿梭動畫旗標
             }
         }
 
         function initUI() {
+            // 綁定左下角面板的 Reset 按鈕
+            const resetBtn = document.getElementById('btn-reset');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', (e) => {
+                    e.preventDefault(); // 防止按鈕焦點殘留
+                    params.resetView();
+                    resetBtn.blur();
+                });
+            }
+
             const gui = new GUI({ title: 'Control Center' }); 
             if (window.innerWidth < 600) gui.close();
 
             const folder1 = gui.addFolder('Input Source');
             folder1.add(params, 'toggleCamera').name('👁️ Hand Tracking');
             folder1.add(params, 'uploadPhoto').name('📷 Upload Image');
-            folder1.add(params, 'resetView').name('↺ Reset View');
+            // Reset View 已移至左下角，這裡移除以減少重複
             
             folder1.add(params, 'floating').name('🌊 Auto Float');
             folder1.add(params, 'floatSpeed', 0.1, 5.0).name('Float Speed');
@@ -691,7 +785,7 @@
                 reader.onload = function(event) {
                     const img = new Image();
                     img.onload = function() {
-                        processImageToParticles(img, false); // 手動上傳非初始載入
+                        processImageToParticles(img, false); 
                     };
                     img.src = event.target.result;
                 };
@@ -889,8 +983,6 @@
                 width: 640,
                 height: 480
             });
-
-            // 不再自動啟動，等待用戶點擊按鈕
         }
 
         function onHandsResults(results) {
@@ -960,36 +1052,57 @@
                 material.uniforms.uPinch.value += (pinchStrength - material.uniforms.uPinch.value) * 0.1;
             }
 
-            controls.update();
+            // --- 開場穿梭動畫邏輯 (修改為全方位移動) ---
+            if (isIntroAnimation) {
+                // 目標位置
+                const targetX = 0;
+                const targetY = 0;
+                const targetZ = 150;
 
-            if (handPresent) {
-                if(particles) {
-                    particles.rotation.y += (targetRotationY - particles.rotation.y) * 0.08;
-                    particles.rotation.x += (targetRotationX - particles.rotation.x) * 0.08;
+                // 平滑移動相機 (X, Y, Z 都要動)
+                const speed = 0.03;
+                camera.position.x += (targetX - camera.position.x) * speed;
+                camera.position.y += (targetY - camera.position.y) * speed;
+                camera.position.z += (targetZ - camera.position.z) * speed;
+                
+                // 飛行過程中持續對焦中心，產生旋轉效果
+                camera.lookAt(0, 0, 0);
+
+                // 計算與目標點的距離
+                const dist = camera.position.distanceTo(new THREE.Vector3(targetX, targetY, targetZ));
+                
+                // 檢查是否接近目標
+                if (dist < 1.0) {
+                    camera.position.set(targetX, targetY, targetZ);
+                    camera.lookAt(0, 0, 0);
+                    isIntroAnimation = false;
+                    controls.enabled = true; // 動畫結束，啟用控制
+                    controls.update();
                 }
-                // 手勢控制時，更新 targetCameraZ 並平滑移動 (注意：這裡不直接修改 z，而是與下方全域 z 更新合併)
-                // 其實手勢改變的是 targetCameraZ，下方的全域更新會處理它
             } else {
-                // --- 待機隨機漂浮動畫 ---
-                if(particles && params.floating) {
-                    const speed = params.floatSpeed;
+                // 正常模式下的控制邏輯
+                controls.update();
 
-                    // X 軸：輕微俯仰
-                    const targetX = Math.sin(time * 0.3 * speed) * 0.15;
-                    particles.rotation.x += (targetX - particles.rotation.x) * 0.02;
+                if (handPresent) {
+                    if(particles) {
+                        particles.rotation.y += (targetRotationY - particles.rotation.y) * 0.08;
+                        particles.rotation.x += (targetRotationX - particles.rotation.x) * 0.08;
+                    }
+                    camera.position.z += (targetCameraZ - camera.position.z) * 0.04;
+                } else {
+                    if(particles && params.floating) {
+                        const speed = params.floatSpeed;
+                        const targetX = Math.sin(time * 0.3 * speed) * 0.15;
+                        particles.rotation.x += (targetX - particles.rotation.x) * 0.02;
 
-                    // Y 軸：左右擺動 (限制在 90 度範圍內)
-                    const maxAngle = Math.PI / 4; 
-                    const rawWave = (Math.sin(time * 0.5 * speed) + Math.cos(time * 0.2 * speed));
-                    const targetY = (rawWave / 2) * maxAngle;
-                    
-                    particles.rotation.y += (targetY - particles.rotation.y) * 0.02;
+                        const maxAngle = Math.PI / 4; 
+                        const rawWave = (Math.sin(time * 0.5 * speed) + Math.cos(time * 0.2 * speed));
+                        const targetY = (rawWave / 2) * maxAngle;
+                        
+                        particles.rotation.y += (targetY - particles.rotation.y) * 0.02;
+                    }
                 }
             }
-
-            // 修改：全域相機 Z 軸平滑移動
-            // 無論有無手勢，都執行這行，以實現開場動畫 (從 5 到 150) 和手勢縮放 (目標變更)
-            camera.position.z += (targetCameraZ - camera.position.z) * 0.04;
 
             composer.render();
         }
