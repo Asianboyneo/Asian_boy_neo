@@ -294,6 +294,93 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             padding-top: 12px;
         }
+
+        /* 瀏覽次數樣式 */
+        .view-count-container {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            display: flex;
+            align-items: center;
+        }
+        
+        .view-count-num {
+            color: #a5b4fc;
+            font-weight: 600;
+            margin-left: 6px;
+            text-shadow: 0 0 8px rgba(165, 180, 252, 0.4);
+        }
+
+        /* --- 手機版響應式優化 (Mobile Responsive) --- */
+        @media (max-width: 600px) {
+            /* 1. 縮小左下角 PARTICLE VISION 面板 */
+            #ui-layer {
+                bottom: 20px;
+                left: 15px;
+                width: calc(100% - 30px); /* 兩邊留空 */
+                padding: 16px;            /* 減少內距 */
+                border-radius: 16px;
+            }
+            
+            #ui-layer h1 {
+                font-size: 1.2rem;        /* 字體變小 */
+                margin-bottom: 8px;
+                padding-bottom: 8px;
+            }
+            
+            #ui-layer p {
+                font-size: 0.8rem;        /* 說明文字變小 */
+                margin: 4px 0;
+            }
+            
+            .divider {
+                margin-top: 10px;
+                padding-top: 8px;
+            }
+            
+            .view-count-container {
+                margin-top: 8px;
+                padding-top: 8px;
+                font-size: 0.75rem;
+            }
+
+            /* 2. 調整左上角社群按鈕 */
+            #social-layer {
+                top: 15px;
+                left: 15px;
+                padding: 8px;
+                gap: 8px;
+                border-radius: 12px;
+            }
+            
+            .social-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+                border-radius: 8px;
+            }
+
+            /* 3. 調整右上角 Control Center */
+            .lil-gui.autoPlace {
+                top: 15px !important;
+                right: 15px !important;
+                /* 稍微限制最大寬度，避免與社群按鈕打架 */
+                max-width: 180px; 
+            }
+            
+            .lil-gui {
+                --width: 180px; /* lil-gui 內部變數，縮小寬度 */
+                font-size: 12px; /* 字體縮小 */
+            }
+            
+            .lil-gui .title {
+                height: 30px;
+                line-height: 30px;
+                font-size: 12px;
+            }
+        }
     </style>
 
     <!-- 引入 MediaPipe -->
@@ -301,7 +388,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
-    <!-- Import Map for Three.js -->
+    <!-- Import Map for Three.js and Firebase -->
     <script type="importmap">
         {
             "imports": {
@@ -339,6 +426,10 @@
             <p>👋 <span class="highlight">Distance</span> to Zoom</p>
             <p>👌 <span class="highlight">Pinch</span> to Explode</p>
         </div>
+        <!-- 瀏覽次數顯示 -->
+        <div class="view-count-container">
+            <i class="fas fa-eye" style="margin-right: 5px;"></i> Views: <span id="view-counter" class="view-count-num">---</span>
+        </div>
     </div>
 
     <!-- 隱藏的文件上傳輸入框 -->
@@ -354,6 +445,12 @@
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // 修正：引入 signInWithCustomToken
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- 全局變量 ---
         let scene, camera, renderer, composer, controls;
@@ -421,6 +518,7 @@
         let pinchStrength = 0;
 
         init();
+        initFirebase(); // 初始化 Firebase
         initUI();
         initMediaPipe();
         initFileUpload();
@@ -481,13 +579,65 @@
             }, 1500);
         }
 
+        // --- Firebase Init & View Counter ---
+        async function initFirebase() {
+            if (typeof __firebase_config === 'undefined') {
+                console.warn("Firebase config not found. View counter disabled.");
+                document.getElementById('view-counter').textContent = "Offline";
+                return;
+            }
+            
+            const firebaseConfig = JSON.parse(__firebase_config);
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+            try {
+                // 1. 優先使用 Custom Token 登入
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                // 2. 設定文件路徑
+                const statsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'site_stats');
+                const viewDocRef = doc(statsCollection, 'view_counter');
+
+                // 3. 更新瀏覽次數
+                const docSnap = await getDoc(viewDocRef);
+                
+                if (docSnap.exists()) {
+                    await updateDoc(viewDocRef, { count: increment(1) });
+                } else {
+                    await setDoc(viewDocRef, { count: 1 });
+                }
+
+                // 4. 即時監聽變化
+                onSnapshot(viewDocRef, (doc) => {
+                    if (doc.exists()) {
+                        const count = doc.data().count;
+                        // 格式化數字 (例如 1,234)
+                        document.getElementById('view-counter').textContent = count.toLocaleString();
+                    }
+                }, (error) => {
+                    console.error("Error watching views:", error);
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization error:", error);
+                document.getElementById('view-counter').textContent = "Error";
+            }
+        }
+
         // --- 載入預設圖片函數 ---
         function loadDefaultImage() {
             const statusText = document.getElementById('status-text');
             if(statusText) statusText.textContent = "Loading Default Image...";
 
             const img = new Image();
-            img.crossOrigin = "Anonymous"; // 嘗試跨域載入
+            img.crossOrigin = "Anonymous"; 
             img.onload = function() {
                 console.log("Default image loaded successfully.");
                 processImageToParticles(img);
@@ -495,10 +645,9 @@
             };
             img.onerror = function() {
                 console.warn("Could not load default image. Falling back to default galaxy.");
-                generateParticles(params.count); // 載入失敗則使用預設星系
+                generateParticles(params.count); 
                 if(statusText) statusText.textContent = "Camera Standby";
             };
-            // 設定為您上傳的圖片路徑
             img.src = DEFAULT_IMAGE_PATH;
         }
 
