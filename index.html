@@ -365,21 +365,32 @@
                 padding-top: 8px;
             }
 
+            /* --- Control Center (lil-gui) 手機版優化 --- */
             .lil-gui.autoPlace {
-                top: 15px !important;
-                right: 15px !important;
-                max-width: 160px;
+                top: 10px !important;
+                right: 10px !important;
+                /* 移除嚴格的 160px 寬度限制，改為自適應或較寬的固定值 */
+                max-width: calc(100vw - 20px) !important;
+                width: auto !important;
             }
             
             .lil-gui {
-                --width: 160px;
-                font-size: 11px;
+                /* 增加內部寬度，避免文字重疊 (原為 160px) */
+                --width: 260px;
+                font-size: 13px;
+                /* 增加觸控高度 */
+                --widget-height: 28px;
+                
+                /* 防止面板過長遮擋到底部 UI */
+                max-height: 50vh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch; /* iOS 順暢捲動 */
             }
             
             .lil-gui .title {
-                height: 28px;
-                line-height: 28px;
-                font-size: 11px;
+                height: 36px;
+                line-height: 36px;
+                font-size: 12px;
             }
             
             .lil-gui .children {
