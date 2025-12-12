@@ -74,6 +74,9 @@
                 inset 0 0 0 1px rgba(255, 255, 255, 0.05);
             
             transition: transform 0.3s ease, opacity 0.3s ease;
+            
+            /* 新增：讓整個容器內的文字預設置中 */
+            text-align: center;
         }
         
         /* 讓面板內的互動元素可以被點擊 */
@@ -92,13 +95,17 @@
             -webkit-text-fill-color: transparent;
             position: relative;
             padding-bottom: 12px;
+            /* 新增：標題置中 */
+            text-align: center;
         }
         
         h1::after {
             content: '';
             position: absolute;
             bottom: 0;
-            left: 0;
+            /* 修改：底線置中 */
+            left: 50%;
+            transform: translateX(-50%);
             width: 40px;
             height: 2px;
             background: rgba(165, 180, 252, 0.5);
@@ -111,6 +118,8 @@
             gap: 10px;
             margin-bottom: 15px; 
             pointer-events: auto; 
+            /* 修改：按鈕列置中 */
+            justify-content: center;
         }
 
         .social-btn {
@@ -161,7 +170,9 @@
             padding-top: 10px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
-            justify-content: space-between;
+            /* 修改：將原本的 space-between 改為 center 並加上間距，使其置中 */
+            justify-content: center;
+            gap: 20px;
             align-items: center;
         }
 
@@ -414,15 +425,8 @@
                 <i class="fa-solid fa-mug-hot"></i>
             </a>
         </div>
-
-        <p><span id="cam-status" class="status-dot"></span><span id="status-text">Camera Standby</span></p>
         
-        <!-- 操作說明 (開啟相機後顯示) -->
-        <div class="divider" id="gesture-instructions" style="display: none;">
-            <p>🖐️ <span class="highlight">Move</span> to Rotate</p>
-            <p>👋 <span class="highlight">Distance</span> to Zoom</p>
-            <p>👌 <span class="highlight">Pinch</span> to Explode</p>
-        </div>
+        <!-- 已移除 Camera Status 和 手勢說明 -->
         
         <!-- 底部區域：瀏覽次數 (左) + Reset 按鈕 (右) -->
         <div class="ui-footer-row">
@@ -509,20 +513,20 @@
                     isCameraActive = false;
                     handPresent = false; 
                     
-                    statusDot.className = 'status-dot status-inactive';
-                    statusText.textContent = "Sensors Offline";
+                    if(statusDot) statusDot.className = 'status-dot status-inactive';
+                    if(statusText) statusText.textContent = "Sensors Offline";
                     
                     if(instructions) instructions.style.display = 'none';
                 } else {
                     cameraUtils.start().then(() => {
                         isCameraActive = true;
-                        statusDot.className = 'status-dot status-active';
-                        statusText.textContent = "Sensors Active";
+                        if(statusDot) statusDot.className = 'status-dot status-active';
+                        if(statusText) statusText.textContent = "Sensors Active";
                         
                         if(instructions) instructions.style.display = 'block';
                     });
-                    statusDot.className = 'status-dot'; 
-                    statusText.textContent = "Initializing...";
+                    if(statusDot) statusDot.className = 'status-dot'; 
+                    if(statusText) statusText.textContent = "Initializing...";
                 }
             },
             uploadPhoto: function() {
