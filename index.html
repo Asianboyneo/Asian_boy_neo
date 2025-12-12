@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <!-- iOS 視口優化 -->
+    <!-- iOS 視口優化: 確保覆蓋整個螢幕，包含瀏海區域 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Cosmic Particles (Unified Space Glass UI)</title>
     
@@ -44,61 +44,6 @@
             z-index: -1;
         }
 
-        /* --- 社交連結層 (左上角) --- */
-        #social-layer {
-            position: absolute;
-            top: 30px;
-            left: 20px;
-            z-index: 12;
-            display: flex;
-            gap: 12px;
-            
-            /* 太空感深色半透明背景 */
-            background: rgba(20, 25, 40, 0.4); 
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            
-            padding: 12px;
-            border-radius: 16px;
-            
-            /* 玻璃邊框質感 */
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-            
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            transition: opacity 0.3s ease;
-        }
-
-        .social-btn {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 1.2rem;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-decoration: none;
-            border: 1px solid transparent;
-        }
-
-        .social-btn:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(165, 180, 252, 0.3);
-            border-color: rgba(165, 180, 252, 0.4);
-        }
-
-        /* 個別品牌顏色微調 (Hover 時) */
-        .social-btn:hover .fa-instagram { color: #e1306c; }
-        .social-btn:hover .fa-youtube { color: #ff0000; }
-        .social-btn:hover .fa-threads { color: #fff; } /* Threads 黑白為主 */
-        .social-btn:hover .fa-mug-hot { color: #13C3FF; } /* Ko-fi 藍 */
-
         /* --- 太空毛玻璃 UI 核心設計 (左下角面板) --- */
         #ui-layer {
             position: absolute;
@@ -111,12 +56,13 @@
             z-index: 10;
             pointer-events: none;
             
+            /* 太空感深色半透明背景 */
             background: rgba(20, 25, 40, 0.4); 
+            /* 強力模糊產生深度感 */
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             
             padding: 24px;
-            
             border-radius: 24px;
             
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -131,18 +77,14 @@
         }
 
         h1 {
-            font-weight: 300; /* 纖細字體 */
+            font-weight: 300;
             margin: 0 0 12px 0;
             font-size: 1.5rem;
             letter-spacing: 2px;
             text-transform: uppercase;
-            
-            /* 星雲漸層文字 */
             background: linear-gradient(120deg, #ffffff 0%, #a5b4fc 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            
-            /* 底部裝飾線 */
             position: relative;
             padding-bottom: 12px;
         }
@@ -158,6 +100,43 @@
             border-radius: 2px;
         }
 
+        /* --- 新增：面板內的社群按鈕列 --- */
+        .social-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px; /* 與下方內容保持距離 */
+            pointer-events: auto; /* 恢復點擊事件 */
+        }
+
+        .social-btn {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .social-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(165, 180, 252, 0.3);
+            border-color: rgba(165, 180, 252, 0.4);
+        }
+
+        /* 個別品牌顏色微調 (Hover 時) */
+        .social-btn:hover .fa-instagram { color: #e1306c; }
+        .social-btn:hover .fa-youtube { color: #ff0000; }
+        .social-btn:hover .fa-threads { color: #fff; } 
+        .social-btn:hover .fa-mug-hot { color: #13C3FF; } 
+
         p {
             margin: 6px 0;
             font-size: 0.9rem;
@@ -166,7 +145,6 @@
             font-weight: 400;
         }
 
-        /* 功能高亮 - 使用柔和的藍紫色 */
         .highlight {
             color: #a5b4fc;
             font-weight: 500;
@@ -175,36 +153,30 @@
 
         /* --- lil-gui 太空毛玻璃風格完全覆蓋 --- */
         .lil-gui { 
-            /* 使用與 #ui-layer 完全相同的背景色變量 */
             --background-color: rgba(20, 25, 40, 0.4);
             --text-color: rgba(255, 255, 255, 0.95);
-            --title-background-color: transparent; /* 標題背景透明，融入整體 */
+            --title-background-color: transparent;
             --widget-color: rgba(255, 255, 255, 0.1);
             --hover-color: rgba(255, 255, 255, 0.2);
             --focus-color: rgba(255, 255, 255, 0.3);
             --number-color: #a5b4fc;
             --string-color: #6ee7b7;
             
-            /* 與 #ui-layer 相同的模糊濾鏡 */
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             
-            /* 與 #ui-layer 相同的圓角與邊框 */
             border-radius: 24px !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
             border-bottom: 1px solid rgba(0, 0, 0, 0.2) !important;
             
-            /* 與 #ui-layer 相同的陰影 */
             box-shadow: 
                 0 10px 40px rgba(0, 0, 0, 0.4),
                 inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
                 
-            /* 增加底部內距 */
             padding-bottom: 15px;
         }
         
-        /* 標題欄美化 - 呼應左下角的 h1 風格 */
         .lil-gui .title {
             height: 40px;
             line-height: 40px;
@@ -212,14 +184,13 @@
             font-weight: 500;
             letter-spacing: 2px;
             text-transform: uppercase;
-            color: #a5b4fc; /* 星雲紫 */
+            color: #a5b4fc; 
             text-shadow: 0 0 15px rgba(165, 180, 252, 0.4);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             background: transparent;
             text-align: center;
         }
 
-        /* 內容區域增加內距 */
         .lil-gui .children {
             padding: 10px;
         }
@@ -245,7 +216,6 @@
             letter-spacing: 3px;
         }
 
-        /* 狀態指示燈 */
         .status-dot {
             display: inline-block;
             width: 8px;
@@ -272,17 +242,8 @@
             animation: pulse 2s infinite;
         }
 
-        .status-active {
-            background-color: #4ade80; 
-            box-shadow: 0 0 15px rgba(74, 222, 128, 0.6);
-            color: #4ade80; 
-        }
-
-        .status-inactive {
-            background-color: #94a3b8;
-            box-shadow: none;
-            color: #94a3b8;
-        }
+        .status-active { background-color: #4ade80; box-shadow: 0 0 15px rgba(74, 222, 128, 0.6); color: #4ade80; }
+        .status-inactive { background-color: #94a3b8; box-shadow: none; color: #94a3b8; }
         
         @keyframes pulse {
             0% { transform: scale(0.8); opacity: 0.5; }
@@ -295,7 +256,6 @@
             padding-top: 12px;
         }
 
-        /* 瀏覽次數樣式 */
         .view-count-container {
             margin-top: 12px;
             padding-top: 10px;
@@ -315,23 +275,36 @@
 
         /* --- 手機版響應式優化 (Mobile Responsive) --- */
         @media (max-width: 600px) {
-            /* 1. 縮小左下角 PARTICLE VISION 面板 */
+            /* 1. 左下角 PARTICLE VISION 面板 (更小、更靠邊) */
             #ui-layer {
                 bottom: 20px;
-                left: 15px;
-                width: calc(100% - 30px); /* 兩邊留空 */
-                padding: 16px;            /* 減少內距 */
+                bottom: calc(20px + env(safe-area-inset-bottom)); /* 避開 Home Bar */
+                left: 10px;
+                width: calc(100% - 20px); /* 滿版但留小邊距 */
+                padding: 15px;            
                 border-radius: 16px;
             }
             
             #ui-layer h1 {
-                font-size: 1.2rem;        /* 字體變小 */
+                font-size: 1.2rem;
                 margin-bottom: 8px;
                 padding-bottom: 8px;
             }
             
-            #ui-layer p {
-                font-size: 0.8rem;        /* 說明文字變小 */
+            /* 社群按鈕在手機上稍微縮小 */
+            .social-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 1rem;
+            }
+            
+            .social-row {
+                margin-bottom: 10px;
+                gap: 8px;
+            }
+            
+            #ui-layer p, .view-count-container {
+                font-size: 0.8rem;
                 margin: 4px 0;
             }
             
@@ -339,46 +312,27 @@
                 margin-top: 10px;
                 padding-top: 8px;
             }
-            
-            .view-count-container {
-                margin-top: 8px;
-                padding-top: 8px;
-                font-size: 0.75rem;
-            }
 
-            /* 2. 調整左上角社群按鈕 */
-            #social-layer {
-                top: 15px;
-                left: 15px;
-                padding: 8px;
-                gap: 8px;
-                border-radius: 12px;
-            }
-            
-            .social-btn {
-                width: 32px;
-                height: 32px;
-                font-size: 1rem;
-                border-radius: 8px;
-            }
-
-            /* 3. 調整右上角 Control Center */
+            /* 2. 右上角 Control Center (縮小寬度) */
             .lil-gui.autoPlace {
                 top: 15px !important;
                 right: 15px !important;
-                /* 稍微限制最大寬度，避免與社群按鈕打架 */
-                max-width: 180px; 
+                max-width: 160px; /* 強制最大寬度 */
             }
             
             .lil-gui {
-                --width: 180px; /* lil-gui 內部變數，縮小寬度 */
-                font-size: 12px; /* 字體縮小 */
+                --width: 160px; /* 變數控制寬度 */
+                font-size: 11px; /* 字體再小一點 */
             }
             
             .lil-gui .title {
-                height: 30px;
-                line-height: 30px;
-                font-size: 12px;
+                height: 28px;
+                line-height: 28px;
+                font-size: 11px;
+            }
+            
+            .lil-gui .children {
+                padding: 5px;
             }
         }
     </style>
@@ -402,30 +356,34 @@
 
     <div id="loading">Initializing Quantum Field...<br><span style="font-size:0.7em; opacity:0.6; letter-spacing: 1px;">Awaiting Input</span></div>
 
-    <!-- 社交媒體連結層 (左上角) -->
-    <div id="social-layer">
-        <a href="https://www.instagram.com/asian_boy_neo" target="_blank" class="social-btn" title="Instagram">
-            <i class="fab fa-instagram"></i>
-        </a>
-        <a href="https://www.youtube.com/@asian_boy_neo" target="_blank" class="social-btn" title="YouTube">
-            <i class="fab fa-youtube"></i>
-        </a>
-        <a href="https://www.threads.com/@asian_boy_neo?hl=zh-tw" target="_blank" class="social-btn" title="Threads">
-            <i class="fa-brands fa-threads"></i>
-        </a>
-        <a href="https://ko-fi.com/asianboyneo" target="_blank" class="social-btn" title="Ko-fi">
-            <i class="fa-solid fa-mug-hot"></i>
-        </a>
-    </div>
-
     <div id="ui-layer">
-        <h1>Particle Vision</h1>
+        <h1>ASIAN BOY VISION</h1>
+        
+        <!-- 社群按鈕整合至此 -->
+        <div class="social-row">
+            <a href="https://www.instagram.com/asian_boy_neo" target="_blank" class="social-btn" title="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://www.youtube.com/@asian_boy_neo" target="_blank" class="social-btn" title="YouTube">
+                <i class="fab fa-youtube"></i>
+            </a>
+            <a href="https://www.threads.com/@asian_boy_neo?hl=zh-tw" target="_blank" class="social-btn" title="Threads">
+                <i class="fa-brands fa-threads"></i>
+            </a>
+            <a href="https://ko-fi.com/asianboyneo" target="_blank" class="social-btn" title="Ko-fi">
+                <i class="fa-solid fa-mug-hot"></i>
+            </a>
+        </div>
+
         <p><span id="cam-status" class="status-dot"></span><span id="status-text">Camera Standby</span></p>
-        <div class="divider">
+        
+        <!-- 預設隱藏的操作說明 -->
+        <div class="divider" id="gesture-instructions" style="display: none;">
             <p>🖐️ <span class="highlight">Move</span> to Rotate</p>
             <p>👋 <span class="highlight">Distance</span> to Zoom</p>
             <p>👌 <span class="highlight">Pinch</span> to Explode</p>
         </div>
+        
         <!-- 瀏覽次數顯示 -->
         <div class="view-count-container">
             <i class="fas fa-eye" style="margin-right: 5px;"></i> Views: <span id="view-counter" class="view-count-num">---</span>
@@ -448,7 +406,6 @@
 
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // 修正：引入 signInWithCustomToken
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -461,24 +418,24 @@
         let cameraUtils; 
         let isCameraActive = false; 
 
-        // 預設圖片路徑 - 使用者指定的圖片名稱
+        // 預設圖片路徑
         const DEFAULT_IMAGE_PATH = '287069905_564270111773809_6459526836966162411_n.jpg';
 
-        // 初始設定更新為使用者要求的數值
         const params = {
-            count: 80000,          // Density
-            size: 306,             // Size
-            opacity: 1.0,          // Opacity
-            bloomStrength: 3.0,    // Glow Intensity
-            depthStrength: 60.0,   // 3D Depth
+            count: 80000,          
+            size: 306,             
+            opacity: 1.0,          
+            bloomStrength: 3.0,    
+            depthStrength: 60.0,   
             floating: true,       
-            floatSpeed: 5.0,       // Float Speed
+            floatSpeed: 5.0,       
             
             toggleCamera: function() {
                 if (!cameraUtils) return;
 
                 const statusDot = document.getElementById('cam-status');
                 const statusText = document.getElementById('status-text');
+                const instructions = document.getElementById('gesture-instructions'); // 獲取說明區塊
 
                 if (isCameraActive) {
                     cameraUtils.stop();
@@ -487,11 +444,17 @@
                     
                     statusDot.className = 'status-dot status-inactive';
                     statusText.textContent = "Sensors Offline";
+                    
+                    // 關閉相機時隱藏說明
+                    if(instructions) instructions.style.display = 'none';
                 } else {
                     cameraUtils.start().then(() => {
                         isCameraActive = true;
                         statusDot.className = 'status-dot status-active';
                         statusText.textContent = "Sensors Active";
+                        
+                        // 開啟相機後顯示說明
+                        if(instructions) instructions.style.display = 'block';
                     });
                     statusDot.className = 'status-dot'; 
                     statusText.textContent = "Initializing...";
@@ -518,7 +481,7 @@
         let pinchStrength = 0;
 
         init();
-        initFirebase(); // 初始化 Firebase
+        initFirebase();
         initUI();
         initMediaPipe();
         initFileUpload();
@@ -528,7 +491,6 @@
             const container = document.getElementById('canvas-container');
 
             scene = new THREE.Scene();
-            // 深邃的太空藍黑背景
             scene.background = new THREE.Color(0x020205); 
             scene.fog = new THREE.FogExp2(0x020205, 0.0015);
 
@@ -546,7 +508,6 @@
             renderer.toneMapping = THREE.ReinhardToneMapping;
             container.appendChild(renderer.domElement);
 
-            // 初始化時嘗試載入預設圖片
             loadDefaultImage();
 
             const renderScene = new RenderPass(scene, camera);
@@ -579,7 +540,6 @@
             }, 1500);
         }
 
-        // --- Firebase Init & View Counter ---
         async function initFirebase() {
             if (typeof __firebase_config === 'undefined') {
                 console.warn("Firebase config not found. View counter disabled.");
@@ -594,18 +554,15 @@
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
             try {
-                // 1. 優先使用 Custom Token 登入
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
                 
-                // 2. 設定文件路徑
                 const statsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'site_stats');
                 const viewDocRef = doc(statsCollection, 'view_counter');
 
-                // 3. 更新瀏覽次數
                 const docSnap = await getDoc(viewDocRef);
                 
                 if (docSnap.exists()) {
@@ -614,11 +571,9 @@
                     await setDoc(viewDocRef, { count: 1 });
                 }
 
-                // 4. 即時監聽變化
                 onSnapshot(viewDocRef, (doc) => {
                     if (doc.exists()) {
                         const count = doc.data().count;
-                        // 格式化數字 (例如 1,234)
                         document.getElementById('view-counter').textContent = count.toLocaleString();
                     }
                 }, (error) => {
@@ -631,7 +586,6 @@
             }
         }
 
-        // --- 載入預設圖片函數 ---
         function loadDefaultImage() {
             const statusText = document.getElementById('status-text');
             if(statusText) statusText.textContent = "Loading Default Image...";
@@ -651,7 +605,6 @@
             img.src = DEFAULT_IMAGE_PATH;
         }
 
-        // --- 抽離：圖片處理邏輯 ---
         function processImageToParticles(img) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
