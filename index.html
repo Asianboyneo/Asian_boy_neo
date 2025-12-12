@@ -495,7 +495,7 @@
             bloomStrength: 3.0,    
             depthStrength: 60.0,   
             floating: true,       
-            floatSpeed: 5.0,       
+            floatSpeed: 3.0,       
             
             toggleCamera: function() {
                 if (!cameraUtils) return;
@@ -537,13 +537,14 @@
                 // 重置粒子本身的旋轉角度
                 if (particles) particles.rotation.set(0, 0, 0);
 
-                // --- 觸發開場穿梭特效邏輯 (修改為隨機角度) ---
-                // 1. 設定隨機發射位置
+                // --- 觸發開場穿梭特效邏輯 ---
+                // 1. 設定隨機發射位置 (注意：不呼叫 controls.reset())
                 setRandomLaunchPosition();
                 
-                // 2. 重置控制器並暫時鎖定
-                controls.reset();
+                // 2. 暫時鎖定控制器
                 controls.enabled = false;
+                // 確保目標點歸零
+                controls.target.set(0, 0, 0);
                 
                 // 3. 開啟動畫旗標
                 isIntroAnimation = true;
@@ -572,8 +573,9 @@
 
             camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 20000); 
             
-            // 修改處：初始位置改為隨機角度
-            setRandomLaunchPosition();
+            // 修正：先設定到標準位置 (0, 0, 150)，讓 Controls 記住這個是 "Home"
+            camera.position.set(0, 0, 150);
+            camera.lookAt(0, 0, 0);
 
             renderer = new THREE.WebGLRenderer({ 
                 antialias: false, 
@@ -601,6 +603,7 @@
             composer.addPass(bloomPass);
             composer.bloomPass = bloomPass;
 
+            // 初始化 OrbitControls
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
@@ -609,7 +612,13 @@
             controls.minPolarAngle = Math.PI * 0.25;
             controls.enableTouch = true;
             
-            // 開場動畫期間暫停控制，避免衝突
+            // 儲存目前狀態 (150) 作為預設點
+            controls.saveState();
+
+            // 開場動畫：手動將相機移到隨機遠方
+            setRandomLaunchPosition();
+            
+            // 開場動畫期間暫停控制
             controls.enabled = false;
 
             window.addEventListener('resize', onWindowResize);
@@ -716,7 +725,7 @@
             generateParticles(params.count, currentImageData);
             
             if (!isInit) {
-                // 修改處：上傳圖片後，使用隨機角度發射
+                // 上傳圖片後，使用隨機角度發射
                 setRandomLaunchPosition();
                 
                 // 重置粒子旋轉，讓新圖片從正面開始
@@ -724,8 +733,9 @@
                 targetRotationX = 0;
                 targetRotationY = 0;
 
-                controls.reset();
-                controls.enabled = false; // 動畫期間暫時鎖定控制
+                // 修正：不呼叫 reset，只鎖定並歸零目標
+                controls.enabled = false; 
+                controls.target.set(0, 0, 0);
                 
                 isIntroAnimation = true; // 重新啟動穿梭動畫旗標
             }
@@ -748,7 +758,6 @@
             const folder1 = gui.addFolder('Input Source');
             folder1.add(params, 'toggleCamera').name('👁️ Hand Tracking');
             folder1.add(params, 'uploadPhoto').name('📷 Upload Image');
-            // Reset View 已移至左下角，這裡移除以減少重複
             
             folder1.add(params, 'floating').name('🌊 Auto Float');
             folder1.add(params, 'floatSpeed', 0.1, 5.0).name('Float Speed');
@@ -1073,11 +1082,19 @@
                 
                 // 檢查是否接近目標
                 if (dist < 1.0) {
+                    // 1. 強制對齊目標點
                     camera.position.set(targetX, targetY, targetZ);
                     camera.lookAt(0, 0, 0);
+                    
                     isIntroAnimation = false;
-                    controls.enabled = true; // 動畫結束，啟用控制
-                    controls.update();
+                    
+                    // 2. 啟用控制器
+                    controls.enabled = true;
+                    
+                    // 3. 關鍵修正：暫時關閉阻尼並更新，以消除切換瞬間的慣性跳動
+                    controls.enableDamping = false;
+                    controls.update(); 
+                    controls.enableDamping = true; // 恢復阻尼
                 }
             } else {
                 // 正常模式下的控制邏輯
