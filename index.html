@@ -178,7 +178,8 @@
             justify-content: center;
             gap: 8px; /* 按鈕間距 */
             align-items: center;
-            flex-wrap: wrap; /* 允許換行以適應小螢幕 */
+            /* 修改：在電腦版保持不換行 */
+            flex-wrap: nowrap; 
         }
 
         /* 回復原本的按鈕樣式 */
@@ -201,9 +202,6 @@
             outline: none;
             justify-content: center;
             white-space: nowrap; /* 確保文字不換行 */
-            user-select: none; /* 防止長按選取文字 */
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
             
             backdrop-filter: none;
             box-shadow: none;
@@ -215,11 +213,6 @@
             border-color: #a5b4fc;
             box-shadow: 0 0 12px rgba(165, 180, 252, 0.4);
             transform: translateY(-1px);
-        }
-        
-        .mode-btn:active, .reset-btn:active {
-            transform: translateY(1px);
-            background: rgba(165, 180, 252, 0.25);
         }
         
         .mode-btn.active-photo, .reset-btn.active-music {
@@ -470,7 +463,6 @@
                 <i class="fa-solid fa-mug-hot"></i>
             </a>
         </div>
-        
         <!-- 底部區域：照片模式切換 (左) + Explosion 按鈕 + Reset 按鈕 + 音樂 (最右) -->
         <div class="ui-footer-row">
             <button id="btn-mode-toggle" class="mode-btn">
@@ -478,7 +470,7 @@
             </button>
             
             <!-- Explosion 按鈕 (已移至 Reset 左邊) -->
-            <button id="btn-explode" class="reset-btn" title="Hold to Sustain Explosion">
+            <button id="btn-explode" class="reset-btn" title="Trigger Explosion">
                 <i class="fas fa-bomb"></i> Explosion
             </button>
 
@@ -514,10 +506,7 @@
         let scene, camera, renderer, composer, controls;
         let particles, geometry, material;
         let imagePlane; // 用於照片模式的平面 Mesh
-        // 新增：時鐘物件，用於計算時間差，解決不同裝置速度不一致問題
-        const clock = new THREE.Clock(); 
         let time = 0;
-        // 已移除 centerOffsetY 變數
         let currentImageData = null; 
         
         let cameraUtils; 
@@ -531,8 +520,6 @@
 
         // 手動爆破變數
         let manualExplosionStrength = 0;
-        // 爆破長按狀態
-        let isHoldingExplode = false;
 
         // 預設圖片路徑
         const DEFAULT_IMAGE_PATH = '287069905_564270111773809_6459526836966162411_n.jpg';
@@ -571,8 +558,6 @@
             }
         }
 
-        // 已移除 updateCentering 函式
-
         // --- 新增：隨機設定相機發射位置的輔助函式 ---
         function setRandomLaunchPosition() {
             // 設定一個極遠的半徑範圍 (例如 2000~3000)
@@ -587,8 +572,8 @@
             camera.position.y = r * Math.sin(phi) * Math.sin(theta);
             camera.position.z = r * Math.cos(phi);
             
-            // 確保相機一開始就看著中心
-            camera.lookAt(0, 0, 0); // 回復為看 0,0,0
+            // 確保相機一開始就看著中心，避免迷失方向
+            camera.lookAt(0, 0, 0);
         }
 
         const params = {
@@ -647,7 +632,7 @@
                 // 2. 暫時鎖定控制器
                 controls.enabled = false;
                 // 確保目標點歸零
-                controls.target.set(0, 0, 0); // 回復為 0,0,0
+                controls.target.set(0, 0, 0);
                 
                 // 3. 開啟動畫旗標
                 isIntroAnimation = true;
@@ -679,18 +664,9 @@
 
             camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 20000); 
             
-            // 初始化 OrbitControls
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-            controls.autoRotate = false; 
-            controls.maxPolarAngle = Math.PI * 0.75;
-            controls.minPolarAngle = Math.PI * 0.25;
-            controls.enableTouch = true;
-
             // 修正：先設定到標準位置 (0, 0, 150)，讓 Controls 記住這個是 "Home"
-            camera.position.set(0, 0, 150); // 回復為 0,0,150
-            camera.lookAt(0, 0, 0); // 回復為看 0,0,0
+            camera.position.set(0, 0, 150);
+            camera.lookAt(0, 0, 0);
 
             renderer = new THREE.WebGLRenderer({ 
                 antialias: false, 
@@ -717,6 +693,15 @@
             composer.addPass(renderScene);
             composer.addPass(bloomPass);
             composer.bloomPass = bloomPass;
+
+            // 初始化 OrbitControls
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = false; 
+            controls.maxPolarAngle = Math.PI * 0.75;
+            controls.minPolarAngle = Math.PI * 0.25;
+            controls.enableTouch = true;
             
             // 儲存目前狀態 (150) 作為預設點
             controls.saveState();
@@ -836,7 +821,7 @@
 
                 // 修正：不呼叫 reset，只鎖定並歸零目標
                 controls.enabled = false; 
-                controls.target.set(0, 0, 0); // 回復為 0,0,0
+                controls.target.set(0, 0, 0);
                 
                 isIntroAnimation = true; // 重新啟動穿梭動畫旗標
 
@@ -848,8 +833,6 @@
         function initUI() {
             // 綁定左下角面板的 Reset 按鈕
             const resetBtn = document.getElementById('btn-reset');
-            
-            // --- Reset 還原為單純點擊邏輯 ---
             if (resetBtn) {
                 resetBtn.addEventListener('click', (e) => {
                     e.preventDefault(); // 防止按鈕焦點殘留
@@ -860,34 +843,25 @@
 
             // 綁定 Explosion 按鈕
             const explodeBtn = document.getElementById('btn-explode');
-            
-            // 長按開始
-            const startExplode = (e) => {
-                if(e.cancelable) e.preventDefault(); 
-                
-                // 如果在照片模式，自動切回粒子模式
-                if(isPhotoMode) {
-                    const modeBtn = document.getElementById('btn-mode-toggle');
-                    if(modeBtn) modeBtn.click();
-                }
-                
-                isHoldingExplode = true;
-            };
-
-            // 長按結束
-            const endExplode = () => {
-                isHoldingExplode = false;
-                if(explodeBtn) explodeBtn.blur();
-            };
-
             if (explodeBtn) {
-                // 綁定按下事件 (滑鼠/觸控)
-                explodeBtn.addEventListener('mousedown', startExplode);
-                explodeBtn.addEventListener('touchstart', startExplode, {passive: false});
-                
-                // 綁定放開事件 (全域監聽，防止滑出按鈕放開無效)
-                window.addEventListener('mouseup', endExplode);
-                window.addEventListener('touchend', endExplode);
+                explodeBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // 如果在照片模式，自動切回粒子模式
+                    if(isPhotoMode) {
+                        const modeBtn = document.getElementById('btn-mode-toggle');
+                        if(modeBtn) modeBtn.click();
+                    }
+
+                    // 設定爆破強度
+                    manualExplosionStrength = 1.0;
+                    
+                    // 已移除：爆破時不再自動播放音樂
+                    // const audio = document.getElementById('bg-music');
+                    // if (audio && audio.paused) playMusic();
+
+                    explodeBtn.blur();
+                });
             }
 
             // --- 新增：綁定音樂按鈕 ---
@@ -1263,63 +1237,44 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
             if(material) material.uniforms.uPixelRatio.value = renderer.getPixelRatio();
-            
-            // 視窗變動時重新計算中心偏移 (已移除此功能)
-            // updateCentering();
         }
 
         function animate() {
             requestAnimationFrame(animate);
-            
-            // 獲取兩幀之間的時間差 (秒)
-            const dt = clock.getDelta(); 
-            // 累加時間給 Shader 使用
-            time += dt;
+            time += 0.01;
 
-            // 處理手動爆破的衰減與維持
-            if (isHoldingExplode) {
-                // 長按時，強度維持在 1.0 (使用時間差讓過渡更平滑)
-                // 使用 lerp: current = current + (target - current) * (1 - exp(-decay * dt))
-                const decay = 5.0;
-                manualExplosionStrength += (1.0 - manualExplosionStrength) * (1.0 - Math.exp(-decay * dt));
-            } else {
-                // 放開時，衰減
-                if (manualExplosionStrength > 0) {
-                    const decay = 5.0; // 調整衰減速度
-                    manualExplosionStrength *= Math.exp(-decay * dt);
-                    if (manualExplosionStrength < 0.01) manualExplosionStrength = 0;
-                }
+            // 處理手動爆破的衰減
+            if (manualExplosionStrength > 0) {
+                // 修改：稍微加快衰減速度，讓回彈更有力 (彈性感)
+                manualExplosionStrength *= 0.90; 
+                if (manualExplosionStrength < 0.01) manualExplosionStrength = 0;
             }
 
             if (material) {
                 material.uniforms.uTime.value = time;
                 // 結合手勢捏合強度 與 手動爆破強度
+                // 取兩者最大值，讓按鈕和手勢都能觸發
                 let totalPinch = Math.max(pinchStrength, manualExplosionStrength);
                 
-                // 平滑過渡 pinch 值 (同樣改為時間相關)
-                const pinchDecay = 5.0;
-                material.uniforms.uPinch.value += (totalPinch - material.uniforms.uPinch.value) * (1.0 - Math.exp(-pinchDecay * dt));
+                material.uniforms.uPinch.value += (totalPinch - material.uniforms.uPinch.value) * 0.1;
             }
 
-            // --- 開場穿梭動畫邏輯 (修改為全方位移動 + 時間基礎) ---
+            // --- 開場穿梭動畫邏輯 (修改為全方位移動) ---
             if (isIntroAnimation) {
                 // 目標位置
                 const targetX = 0;
-                const targetY = 0; // 回復為 0
+                const targetY = 0;
                 const targetZ = 150;
 
-                // --- 關鍵修正：將速度改為與時間掛鉤 ---
-                const referenceFPS = 60;
-                const baseFactor = 0.0055; 
-                const timeAdjustedSpeed = 1 - Math.pow(1 - baseFactor, dt * referenceFPS);
-
                 // 平滑移動相機 (X, Y, Z 都要動)
-                camera.position.x += (targetX - camera.position.x) * timeAdjustedSpeed;
-                camera.position.y += (targetY - camera.position.y) * timeAdjustedSpeed;
-                camera.position.z += (targetZ - camera.position.z) * timeAdjustedSpeed;
+                // 修改處：將速度調整為 0.0055，使動畫時間約為 20-21 秒
+                const speed = 0.0055;
+                camera.position.x += (targetX - camera.position.x) * speed;
+                camera.position.y += (targetY - camera.position.y) * speed;
+                camera.position.z += (targetZ - camera.position.z) * speed;
                 
-                // 飛行過程中持續對焦中心
-                camera.lookAt(0, 0, 0); // 回復為 0,0,0
+                // 飛行過程中持續對焦中心，產生旋轉效果
+                camera.lookAt(0, 0, 0);
 
                 // 計算與目標點的距離
                 const dist = camera.position.distanceTo(new THREE.Vector3(targetX, targetY, targetZ));
@@ -1328,7 +1283,7 @@
                 if (dist < 1.5) {
                     // 1. 強制對齊目標點
                     camera.position.set(targetX, targetY, targetZ);
-                    camera.lookAt(0, 0, 0); // 回復為 0,0,0
+                    camera.lookAt(0, 0, 0);
                     
                     isIntroAnimation = false;
                     
@@ -1345,31 +1300,22 @@
                 controls.update();
 
                 if (handPresent) {
-                    // 手勢控制也加入時間差修正，讓操作更跟手
-                    const rotationSpeed = 3.0 * dt; // 調整旋轉速度系數
-                    const zoomSpeed = 2.0 * dt;
-
                     if(particles) {
-                        particles.rotation.y += (targetRotationY - particles.rotation.y) * rotationSpeed;
-                        particles.rotation.x += (targetRotationX - particles.rotation.x) * rotationSpeed;
+                        particles.rotation.y += (targetRotationY - particles.rotation.y) * 0.08;
+                        particles.rotation.x += (targetRotationX - particles.rotation.x) * 0.08;
                     }
-                    camera.position.z += (targetCameraZ - camera.position.z) * zoomSpeed;
+                    camera.position.z += (targetCameraZ - camera.position.z) * 0.04;
                 } else {
                     if(particles && params.floating && !isPhotoMode) {
                         const speed = params.floatSpeed;
-                        // 自動漂浮原本用 time (已是累加時間)，所以這裡只要確保 time 是根據 dt 累加的即可 (上面已修正)
-                        
-                        // 但旋轉阻尼也需要時間修正
-                        const floatDamping = 1.0 * dt; 
-
                         const targetX = Math.sin(time * 0.3 * speed) * 0.15;
-                        particles.rotation.x += (targetX - particles.rotation.x) * floatDamping;
+                        particles.rotation.x += (targetX - particles.rotation.x) * 0.02;
 
                         const maxAngle = Math.PI / 4; 
                         const rawWave = (Math.sin(time * 0.5 * speed) + Math.cos(time * 0.2 * speed));
                         const targetY = (rawWave / 2) * maxAngle;
                         
-                        particles.rotation.y += (targetY - particles.rotation.y) * floatDamping;
+                        particles.rotation.y += (targetY - particles.rotation.y) * 0.02;
                     }
                 }
             }
