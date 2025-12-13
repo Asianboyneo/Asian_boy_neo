@@ -59,7 +59,7 @@
             left: 20px; /* 電腦版：靠左 */
             transform: none; /* 電腦版：不進行位移修正 */
             
-            max-width: 400px; /* 稍微加寬以容納新按鈕 */
+            max-width: 420px; /* 稍微加寬以容納新按鈕 */
             width: calc(100% - 40px);
             
             color: rgba(255, 255, 255, 0.95);
@@ -213,7 +213,7 @@
             transform: translateY(-1px);
         }
         
-        .mode-btn.active-photo {
+        .mode-btn.active-photo, .reset-btn.active-music {
             background: rgba(165, 180, 252, 0.25);
             color: #fff;
             border-color: #fff;
@@ -417,7 +417,9 @@
     <div id="loading">Initializing Quantum Field...<br><span style="font-size:0.7em; opacity:0.6; letter-spacing: 1px;">Awaiting Input</span></div>
 
     <!-- 加入音訊元素 -->
-    <audio id="bg-music" src="http://googleusercontent.com/file_content/1" preload="auto"></audio>
+    <audio id="bg-music" loop>
+        <source src="Artlist Musical Logos - Tribal Rhythm.mp3" type="audio/mpeg">
+    </audio>
 
     <div id="ui-layer">
         <h1>ASIAN BOY VISION</h1>
@@ -438,12 +440,17 @@
             </a>
         </div>
         
-        <!-- 底部區域：照片模式切換 (左) + Reset 按鈕 (中) + Explosion 按鈕 (右) -->
+        <!-- 底部區域：照片模式切換 (左) + 音樂 + Reset + Explosion -->
         <div class="ui-footer-row">
             <button id="btn-mode-toggle" class="mode-btn">
                 <i class="fas fa-image"></i> Photo Mode
             </button>
             
+            <!-- 新增：音樂控制按鈕 -->
+            <button id="btn-music" class="reset-btn" title="Toggle Music">
+                <i class="fas fa-volume-mute"></i>
+            </button>
+
             <button id="btn-reset" class="reset-btn" title="Reset View">
                 <i class="fas fa-sync-alt"></i> Reset
             </button>
@@ -494,15 +501,36 @@
         const DEFAULT_IMAGE_PATH = '287069905_564270111773809_6459526836966162411_n.jpg';
 
         // --- 播放音樂的輔助函式 ---
-        function playMusic() {
+        function playMusic(restart = false) {
             const audio = document.getElementById('bg-music');
+            const musicBtn = document.getElementById('btn-music');
+            
             if (audio) {
-                audio.currentTime = 0;
-                // 注意：瀏覽器可能會因為沒有使用者互動而阻擋播放
-                // 這裡我們 catch 錯誤以防報錯干擾程式
-                audio.play().catch(e => {
-                    console.log("Autoplay prevented:", e);
-                });
+                if (restart) {
+                    audio.currentTime = 0;
+                }
+                
+                // 嘗試播放
+                const playPromise = audio.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        // 播放成功
+                        if (musicBtn) {
+                            musicBtn.innerHTML = '<i class="fas fa-music"></i>';
+                            musicBtn.classList.add('active-music');
+                        }
+                    })
+                    .catch(error => {
+                        // 播放失敗 (通常是因為沒有使用者互動)
+                        console.log("Autoplay prevented:", error);
+                        // 保持靜音圖示
+                        if (musicBtn) {
+                            musicBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                            musicBtn.classList.remove('active-music');
+                        }
+                    });
+                }
             }
         }
 
@@ -585,8 +613,8 @@
                 // 3. 開啟動畫旗標
                 isIntroAnimation = true;
 
-                // 4. 播放音樂
-                playMusic();
+                // 4. 重播音樂 (因為這是使用者點擊觸發的，所以瀏覽器會允許播放)
+                playMusic(true);
             }
         };
         
@@ -667,7 +695,7 @@
                 if(loading) loading.style.opacity = 0;
             }, 1500);
 
-            // 嘗試開場播放音樂
+            // 嘗試開場播放音樂 (可能會被阻擋)
             playMusic();
         }
 
@@ -773,8 +801,8 @@
                 
                 isIntroAnimation = true; // 重新啟動穿梭動畫旗標
 
-                // 上傳新圖片時也播放音樂
-                playMusic();
+                // 上傳新圖片時也重播音樂
+                playMusic(true);
             }
         }
 
@@ -804,7 +832,30 @@
                     // 設定爆破強度
                     manualExplosionStrength = 1.0;
                     
+                    // 爆破時也嘗試播放音樂(如果沒播的話)
+                    const audio = document.getElementById('bg-music');
+                    if (audio && audio.paused) playMusic();
+
                     explodeBtn.blur();
+                });
+            }
+
+            // --- 新增：綁定音樂按鈕 ---
+            const musicBtn = document.getElementById('btn-music');
+            if (musicBtn) {
+                musicBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const audio = document.getElementById('bg-music');
+                    if (audio) {
+                        if (audio.paused) {
+                            playMusic(); // 播放
+                        } else {
+                            audio.pause();
+                            musicBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                            musicBtn.classList.remove('active-music');
+                        }
+                    }
+                    musicBtn.blur();
                 });
             }
 
