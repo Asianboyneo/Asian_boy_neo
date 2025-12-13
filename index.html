@@ -1308,17 +1308,13 @@
             if (isIntroAnimation) {
                 // 目標位置
                 const targetX = 0;
-                const targetY = 0; 
+                const targetY = 0; // 回復為 0
                 const targetZ = 150;
 
-                // --- 關鍵修正：將速度改為與時間掛鉤 (Frame Rate Independent) ---
-                // 這裡的邏輯是：無論 FPS 多少，每秒移動的比例是固定的
-                // baseFactor = 0.008 大約對應 12-15 秒的飛行時間，在電腦上會感覺更輕快
+                // --- 關鍵修正：將速度改為與時間掛鉤 ---
                 const referenceFPS = 60;
-                const baseFactor = 0.008; 
-                
-                // 計算經過時間 dt 後，應該移動多少比例
-                // 數學原理：(1 - speed)^frames = (1 - adjustedSpeed)
+                // 修改處：將速度係數調降至 0.0055，使動畫時間延長至約 20-21 秒
+                const baseFactor = 0.0055; 
                 const timeAdjustedSpeed = 1 - Math.pow(1 - baseFactor, dt * referenceFPS);
 
                 // 平滑移動相機 (X, Y, Z 都要動)
@@ -1327,7 +1323,7 @@
                 camera.position.z += (targetZ - camera.position.z) * timeAdjustedSpeed;
                 
                 // 飛行過程中持續對焦中心
-                camera.lookAt(0, 0, 0); 
+                camera.lookAt(0, 0, 0); // 回復為 0,0,0
 
                 // 計算與目標點的距離
                 const dist = camera.position.distanceTo(new THREE.Vector3(targetX, targetY, targetZ));
@@ -1336,7 +1332,7 @@
                 if (dist < 1.5) {
                     // 1. 強制對齊目標點
                     camera.position.set(targetX, targetY, targetZ);
-                    camera.lookAt(0, 0, 0); 
+                    camera.lookAt(0, 0, 0); // 回復為 0,0,0
                     
                     isIntroAnimation = false;
                     
