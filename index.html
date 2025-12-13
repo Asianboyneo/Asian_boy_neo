@@ -150,18 +150,45 @@
         .social-btn:hover .fa-threads { color: #fff; } 
         .social-btn:hover .fa-mug-hot { color: #13C3FF; } 
 
-        p {
-            margin: 6px 0;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.7);
-            line-height: 1.6;
-            font-weight: 400;
+        /* --- 新增：模式切換按鈕區域 --- */
+        .mode-toggle-row {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: center;
         }
 
-        .highlight {
+        .mode-btn {
+            background: rgba(165, 180, 252, 0.1);
+            border: 1px solid rgba(165, 180, 252, 0.4);
             color: #a5b4fc;
-            font-weight: 500;
-            text-shadow: 0 0 15px rgba(165, 180, 252, 0.4);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            outline: none;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .mode-btn:hover {
+            background: rgba(165, 180, 252, 0.25);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(165, 180, 252, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .mode-btn.active-photo {
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            border-color: #fff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
         }
 
         /* --- 底部資訊與按鈕列 --- */
@@ -437,7 +464,12 @@
             </a>
         </div>
         
-        <!-- 已移除 Camera Status 和 手勢說明 -->
+        <!-- 新增：照片/粒子模式切換按鈕 -->
+        <div class="mode-toggle-row">
+            <button id="btn-mode-toggle" class="mode-btn">
+                <i class="fas fa-image"></i> Switch to Photo Mode
+            </button>
+        </div>
         
         <!-- 底部區域：瀏覽次數 (左) + Reset 按鈕 (右) -->
         <div class="ui-footer-row">
@@ -473,6 +505,7 @@
         // --- 全局變量 ---
         let scene, camera, renderer, composer, controls;
         let particles, geometry, material;
+        let imagePlane; // 用於照片模式的平面 Mesh
         let time = 0;
         let currentImageData = null; 
         
@@ -481,6 +514,9 @@
         
         // 開場動畫狀態旗標
         let isIntroAnimation = true;
+        
+        // 照片模式狀態旗標
+        let isPhotoMode = false;
 
         // 預設圖片路徑
         const DEFAULT_IMAGE_PATH = '287069905_564270111773809_6459526836966162411_n.jpg';
@@ -738,6 +774,44 @@
             };
 
             generateParticles(params.count, currentImageData);
+
+            // --- 新增：創建照片模式用的 Plane Mesh ---
+            const displayWidth = 100;
+            const displayHeight = 100;
+            let finalWidth, finalHeight;
+            if (currentImageData.aspectRatio >= 1) {
+                finalWidth = displayWidth;
+                finalHeight = displayWidth / currentImageData.aspectRatio;
+            } else {
+                finalWidth = displayHeight * currentImageData.aspectRatio;
+                finalHeight = displayHeight;
+            }
+
+            // 清除舊的 imageMesh
+            if (imagePlane) {
+                scene.remove(imagePlane);
+                imagePlane.geometry.dispose();
+                if(imagePlane.material.map) imagePlane.material.map.dispose();
+                imagePlane.material.dispose();
+            }
+
+            const texture = new THREE.Texture(img);
+            texture.needsUpdate = true;
+            texture.colorSpace = THREE.SRGBColorSpace; 
+
+            const planeGeometry = new THREE.PlaneGeometry(finalWidth, finalHeight);
+            const planeMaterial = new THREE.MeshBasicMaterial({ 
+                map: texture,
+                transparent: true,
+                side: THREE.DoubleSide
+            });
+
+            imagePlane = new THREE.Mesh(planeGeometry, planeMaterial);
+            imagePlane.visible = isPhotoMode; // 根據目前模式決定是否顯示
+            scene.add(imagePlane);
+
+            // 更新粒子可見度 (根據是否為 Photo Mode)
+            if(particles) particles.visible = !isPhotoMode;
             
             if (!isInit) {
                 // 上傳圖片後，使用隨機角度發射
@@ -764,6 +838,35 @@
                     e.preventDefault(); // 防止按鈕焦點殘留
                     params.resetView();
                     resetBtn.blur();
+                });
+            }
+
+            // --- 新增：綁定照片模式切換按鈕 ---
+            const modeBtn = document.getElementById('btn-mode-toggle');
+            if (modeBtn) {
+                modeBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    isPhotoMode = !isPhotoMode;
+                    
+                    if (isPhotoMode) {
+                        modeBtn.innerHTML = '<i class="fas fa-cubes"></i> Switch to Particle Mode';
+                        modeBtn.classList.add('active-photo');
+                        
+                        // 切換為照片模式：隱藏粒子，顯示照片，減弱發光
+                        if (particles) particles.visible = false;
+                        if (imagePlane) imagePlane.visible = true;
+                        if (composer.bloomPass) composer.bloomPass.strength = 0.2; // 微微發光即可，太強會過曝
+                    } else {
+                        modeBtn.innerHTML = '<i class="fas fa-image"></i> Switch to Photo Mode';
+                        modeBtn.classList.remove('active-photo');
+                        
+                        // 切換回粒子模式：顯示粒子，隱藏照片，恢復發光
+                        if (particles) particles.visible = true;
+                        if (imagePlane) imagePlane.visible = false;
+                        if (composer.bloomPass) composer.bloomPass.strength = params.bloomStrength;
+                    }
+                    
+                    modeBtn.blur();
                 });
             }
 
@@ -795,7 +898,11 @@
             });
 
             folder2.add(params, 'bloomStrength', 0, 3).name('Glow Intensity').onChange(val => {
-                if(composer.bloomPass) composer.bloomPass.strength = val;
+                params.bloomStrength = val; // 更新 params 數值
+                // 只有在非照片模式下才即時更新 bloom 強度
+                if (!isPhotoMode && composer.bloomPass) {
+                    composer.bloomPass.strength = val;
+                }
             });
         }
 
@@ -978,6 +1085,8 @@
             }
 
             particles = new THREE.Points(geometry, material);
+            // 注意：這裡不直接 add(particles)，改為根據模式判斷
+            particles.visible = !isPhotoMode; 
             scene.add(particles);
         }
 
@@ -1116,13 +1225,15 @@
                 controls.update();
 
                 if (handPresent) {
-                    if(particles) {
+                    // 粒子模式下才允許手勢旋轉粒子
+                    if(particles && !isPhotoMode) {
                         particles.rotation.y += (targetRotationY - particles.rotation.y) * 0.08;
                         particles.rotation.x += (targetRotationX - particles.rotation.x) * 0.08;
                     }
                     camera.position.z += (targetCameraZ - camera.position.z) * 0.04;
                 } else {
-                    if(particles && params.floating) {
+                    // 粒子模式下才自動旋轉
+                    if(particles && params.floating && !isPhotoMode) {
                         const speed = params.floatSpeed;
                         const targetX = Math.sin(time * 0.3 * speed) * 0.15;
                         particles.rotation.x += (targetX - particles.rotation.x) * 0.02;
