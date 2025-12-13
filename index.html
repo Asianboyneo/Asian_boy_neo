@@ -1232,8 +1232,8 @@
                 const targetZ = 150;
 
                 // 平滑移動相機 (X, Y, Z 都要動)
-                // 修改處：將速度係數微調至 0.0075，使動畫時間約為 15-16 秒
-                const speed = 0.0075;
+                // 修改處：將速度調整為 0.0065，使動畫時間約為 18-19 秒
+                const speed = 0.0065;
                 camera.position.x += (targetX - camera.position.x) * speed;
                 camera.position.y += (targetY - camera.position.y) * speed;
                 camera.position.z += (targetZ - camera.position.z) * speed;
