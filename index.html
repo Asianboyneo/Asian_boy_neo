@@ -514,7 +514,10 @@
         let scene, camera, renderer, composer, controls;
         let particles, geometry, material;
         let imagePlane; // 用於照片模式的平面 Mesh
+        // 新增：時鐘物件，用於計算時間差，解決不同裝置速度不一致問題
+        const clock = new THREE.Clock(); 
         let time = 0;
+        // 已移除 centerOffsetY 變數
         let currentImageData = null; 
         
         let cameraUtils; 
@@ -528,7 +531,8 @@
 
         // 手動爆破變數
         let manualExplosionStrength = 0;
-        // 爆破長按狀態
+        
+        // 新增：爆破長按狀態
         let isHoldingExplode = false;
 
         // 預設圖片路徑
@@ -582,7 +586,7 @@
             camera.position.y = r * Math.sin(phi) * Math.sin(theta);
             camera.position.z = r * Math.cos(phi);
             
-            // 確保相機一開始就看著中心，避免迷失方向
+            // 確保相機一開始就看著中心
             camera.lookAt(0, 0, 0);
         }
 
@@ -675,8 +679,8 @@
             camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 20000); 
             
             // 修正：先設定到標準位置 (0, 0, 150)，讓 Controls 記住這個是 "Home"
-            camera.position.set(0, 0, 150);
-            camera.lookAt(0, 0, 0);
+            camera.position.set(0, 0, 150); // 回復為 0,0,150
+            camera.lookAt(0, 0, 0); // 回復為看 0,0,0
 
             renderer = new THREE.WebGLRenderer({ 
                 antialias: false, 
@@ -687,6 +691,18 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
             renderer.toneMapping = THREE.ReinhardToneMapping;
             container.appendChild(renderer.domElement);
+
+            // 初始化 OrbitControls (注意：要在 renderer 創建之後)
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = false; 
+            controls.maxPolarAngle = Math.PI * 0.75;
+            controls.minPolarAngle = Math.PI * 0.25;
+            controls.enableTouch = true;
+            
+            // 儲存目前狀態 (150) 作為預設點
+            controls.saveState();
 
             loadDefaultImage();
 
@@ -703,19 +719,7 @@
             composer.addPass(renderScene);
             composer.addPass(bloomPass);
             composer.bloomPass = bloomPass;
-
-            // 初始化 OrbitControls
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-            controls.autoRotate = false; 
-            controls.maxPolarAngle = Math.PI * 0.75;
-            controls.minPolarAngle = Math.PI * 0.25;
-            controls.enableTouch = true;
             
-            // 儲存目前狀態 (150) 作為預設點
-            controls.saveState();
-
             // 開場動畫：手動將相機移到隨機遠方
             setRandomLaunchPosition();
             
@@ -831,7 +835,7 @@
 
                 // 修正：不呼叫 reset，只鎖定並歸零目標
                 controls.enabled = false; 
-                controls.target.set(0, 0, 0);
+                controls.target.set(0, 0, 0); // 回復為 0,0,0
                 
                 isIntroAnimation = true; // 重新啟動穿梭動畫旗標
 
@@ -856,9 +860,10 @@
             // 綁定 Explosion 按鈕
             const explodeBtn = document.getElementById('btn-explode');
             
-            // 長按開始
+            // 定義長按開始
             const startExplode = (e) => {
-                if(e.cancelable) e.preventDefault(); 
+                // 防止觸發 click 或預設行為 (例如選取文字)
+                if(e.cancelable && e.type === 'touchstart') e.preventDefault();
                 
                 // 如果在照片模式，自動切回粒子模式
                 if(isPhotoMode) {
@@ -869,13 +874,14 @@
                 isHoldingExplode = true;
             };
 
-            // 長按結束
+            // 定義長按結束
             const endExplode = () => {
                 isHoldingExplode = false;
                 if(explodeBtn) explodeBtn.blur();
             };
 
             if (explodeBtn) {
+                // 移除舊的 click 監聽 (如果有)
                 // 綁定按下事件 (滑鼠/觸控)
                 explodeBtn.addEventListener('mousedown', startExplode);
                 explodeBtn.addEventListener('touchstart', startExplode, {passive: false});
@@ -883,6 +889,7 @@
                 // 綁定放開事件 (全域監聽，防止滑出按鈕放開無效)
                 window.addEventListener('mouseup', endExplode);
                 window.addEventListener('touchend', endExplode);
+                window.addEventListener('mouseleave', endExplode); // 滑鼠移出視窗也視為放開
             }
 
             // --- 新增：綁定音樂按鈕 ---
@@ -1262,45 +1269,65 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            time += 0.01;
+            
+            // --- 關鍵修正：引入 Delta Time (時間差) ---
+            // getDelta() 會回傳上一幀到這一幀經過的秒數
+            // 加入 Math.min(dt, 0.1) 是為了防止使用者切換分頁後回來，dt 變得過大導致動畫瞬間跳躍
+            const rawDt = clock.getDelta();
+            const dt = Math.min(rawDt, 0.1); 
+
+            // 累加時間給 Shader 使用
+            time += dt;
 
             // 處理手動爆破的衰減與維持
             if (isHoldingExplode) {
-                // 長按時，強度維持在 1.0 (或者平滑上升)
-                manualExplosionStrength += (1.0 - manualExplosionStrength) * 0.1;
+                // 長按時，強度快速上升並維持在 1.0 (使用時間差讓過渡更平滑)
+                // 使用 lerp: current = current + (target - current) * (1 - exp(-decay * dt))
+                const decay = 8.0;
+                manualExplosionStrength += (1.0 - manualExplosionStrength) * (1.0 - Math.exp(-decay * dt));
             } else {
                 // 放開時，衰減
                 if (manualExplosionStrength > 0) {
-                    manualExplosionStrength *= 0.90; 
-                    if (manualExplosionStrength < 0.01) manualExplosionStrength = 0;
+                    const decay = 4.0; // 調整衰減速度
+                    manualExplosionStrength *= Math.exp(-decay * dt);
+                    if (manualExplosionStrength < 0.001) manualExplosionStrength = 0;
                 }
             }
 
             if (material) {
                 material.uniforms.uTime.value = time;
                 // 結合手勢捏合強度 與 手動爆破強度
-                // 取兩者最大值，讓按鈕和手勢都能觸發
                 let totalPinch = Math.max(pinchStrength, manualExplosionStrength);
                 
-                material.uniforms.uPinch.value += (totalPinch - material.uniforms.uPinch.value) * 0.1;
+                // 平滑過渡 pinch 值 (同樣改為時間相關)
+                const pinchDecay = 5.0;
+                material.uniforms.uPinch.value += (totalPinch - material.uniforms.uPinch.value) * (1.0 - Math.exp(-pinchDecay * dt));
             }
 
-            // --- 開場穿梭動畫邏輯 (修改為全方位移動) ---
+            // --- 開場穿梭動畫邏輯 (修改為全方位移動 + 時間基礎) ---
             if (isIntroAnimation) {
                 // 目標位置
                 const targetX = 0;
-                const targetY = 0;
+                const targetY = 0; 
                 const targetZ = 150;
 
-                // 平滑移動相機 (X, Y, Z 都要動)
-                // 修改處：將速度調整為 0.0055，使動畫時間約為 20-21 秒
-                const speed = 0.0055;
-                camera.position.x += (targetX - camera.position.x) * speed;
-                camera.position.y += (targetY - camera.position.y) * speed;
-                camera.position.z += (targetZ - camera.position.z) * speed;
+                // --- 關鍵修正：將速度改為與時間掛鉤 (Frame Rate Independent) ---
+                // 這裡的邏輯是：無論 FPS 多少，每秒移動的比例是固定的
+                // baseFactor = 0.008 大約對應 12-15 秒的飛行時間，在電腦上會感覺更輕快
+                const referenceFPS = 60;
+                const baseFactor = 0.008; 
                 
-                // 飛行過程中持續對焦中心，產生旋轉效果
-                camera.lookAt(0, 0, 0);
+                // 計算經過時間 dt 後，應該移動多少比例
+                // 數學原理：(1 - speed)^frames = (1 - adjustedSpeed)
+                const timeAdjustedSpeed = 1 - Math.pow(1 - baseFactor, dt * referenceFPS);
+
+                // 平滑移動相機 (X, Y, Z 都要動)
+                camera.position.x += (targetX - camera.position.x) * timeAdjustedSpeed;
+                camera.position.y += (targetY - camera.position.y) * timeAdjustedSpeed;
+                camera.position.z += (targetZ - camera.position.z) * timeAdjustedSpeed;
+                
+                // 飛行過程中持續對焦中心
+                camera.lookAt(0, 0, 0); 
 
                 // 計算與目標點的距離
                 const dist = camera.position.distanceTo(new THREE.Vector3(targetX, targetY, targetZ));
@@ -1309,7 +1336,7 @@
                 if (dist < 1.5) {
                     // 1. 強制對齊目標點
                     camera.position.set(targetX, targetY, targetZ);
-                    camera.lookAt(0, 0, 0);
+                    camera.lookAt(0, 0, 0); 
                     
                     isIntroAnimation = false;
                     
@@ -1326,22 +1353,33 @@
                 controls.update();
 
                 if (handPresent) {
+                    // 手勢控制也加入時間差修正，讓操作更跟手，不會因為 FPS 不同而忽快忽慢
+                    const rotationSpeed = 3.0 * dt; // 調整旋轉速度系數
+                    const zoomSpeed = 200.0 * dt;   // 調整縮放速度系數 (注意：這裡是位移量，不是比例)
+
                     if(particles) {
-                        particles.rotation.y += (targetRotationY - particles.rotation.y) * 0.08;
-                        particles.rotation.x += (targetRotationX - particles.rotation.x) * 0.08;
+                        particles.rotation.y += (targetRotationY - particles.rotation.y) * rotationSpeed;
+                        particles.rotation.x += (targetRotationX - particles.rotation.x) * rotationSpeed;
                     }
-                    camera.position.z += (targetCameraZ - camera.position.z) * 0.04;
+                    // 注意：手勢縮放通常是直接控制位置，這裡簡單用 lerp 或直接加減
+                    // 為了保持原本手感，這裡微調係數
+                    camera.position.z += (targetCameraZ - camera.position.z) * (2.0 * dt);
                 } else {
                     if(particles && params.floating && !isPhotoMode) {
                         const speed = params.floatSpeed;
+                        
+                        // 旋轉阻尼也需要時間修正
+                        const floatDamping = 1.0 * dt; 
+
+                        // time 已經是根據 dt 累加的，所以這裡的 sin/cos 波形會自動正確
                         const targetX = Math.sin(time * 0.3 * speed) * 0.15;
-                        particles.rotation.x += (targetX - particles.rotation.x) * 0.02;
+                        particles.rotation.x += (targetX - particles.rotation.x) * floatDamping;
 
                         const maxAngle = Math.PI / 4; 
                         const rawWave = (Math.sin(time * 0.5 * speed) + Math.cos(time * 0.2 * speed));
                         const targetY = (rawWave / 2) * maxAngle;
                         
-                        particles.rotation.y += (targetY - particles.rotation.y) * 0.02;
+                        particles.rotation.y += (targetY - particles.rotation.y) * floatDamping;
                     }
                 }
             }
