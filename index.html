@@ -463,23 +463,23 @@
                 <i class="fa-solid fa-mug-hot"></i>
             </a>
         </div>
-        
-        <!-- 底部區域：照片模式切換 (左) + Reset 按鈕 (中) + Explosion 按鈕 (右) + 音樂 (最右) -->
+        <!-- 底部區域：照片模式切換 (左) + Explosion 按鈕 + Reset 按鈕 + 音樂 (最右) -->
         <div class="ui-footer-row">
             <button id="btn-mode-toggle" class="mode-btn">
                 <i class="fas fa-image"></i> Photo Mode
             </button>
             
-            <button id="btn-reset" class="reset-btn" title="Reset View">
-                <i class="fas fa-sync-alt"></i> Reset
-            </button>
-
-            <!-- 新增的 Explosion 按鈕 -->
+            <!-- Explosion 按鈕 (已移至 Reset 左邊) -->
             <button id="btn-explode" class="reset-btn" title="Trigger Explosion">
                 <i class="fas fa-bomb"></i> Explosion
             </button>
 
-            <!-- 音樂控制按鈕 (移至最右邊) -->
+            <!-- Reset 按鈕 (已移至 Explosion 右邊) -->
+            <button id="btn-reset" class="reset-btn" title="Reset View">
+                <i class="fas fa-sync-alt"></i> Reset
+            </button>
+
+            <!-- 音樂控制按鈕 (保持最右邊) -->
             <button id="btn-music" class="reset-btn" title="Toggle Music">
                 <i class="fas fa-volume-mute"></i>
             </button>
@@ -856,9 +856,9 @@
                     // 設定爆破強度
                     manualExplosionStrength = 1.0;
                     
-                    // 爆破時也嘗試播放音樂(如果沒播的話)
-                    const audio = document.getElementById('bg-music');
-                    if (audio && audio.paused) playMusic();
+                    // 已移除：爆破時不再自動播放音樂
+                    // const audio = document.getElementById('bg-music');
+                    // if (audio && audio.paused) playMusic();
 
                     explodeBtn.blur();
                 });
