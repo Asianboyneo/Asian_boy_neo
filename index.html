@@ -517,7 +517,7 @@
         // 新增：時鐘物件，用於計算時間差，解決不同裝置速度不一致問題
         const clock = new THREE.Clock(); 
         let time = 0;
-        let centerOffsetY = 0; // 新增：用於調整視覺中心的垂直偏移量
+        // 已移除 centerOffsetY 變數
         let currentImageData = null; 
         
         let cameraUtils; 
@@ -571,18 +571,7 @@
             }
         }
 
-        // --- 新增：更新視覺中心位置的函式 ---
-        function updateCentering() {
-             // 手機直式時，將中心點下移 (target Y負值)，讓物體視覺上移，避開底部 UI
-             // 假設視角高約 140單位 (at z=150)，移動 15 單位約 10%
-             if (window.innerWidth < window.innerHeight && window.innerWidth < 768) {
-                 centerOffsetY = -15; 
-             } else {
-                 centerOffsetY = 0;
-             }
-             // 更新控制器的目標點
-             if(controls) controls.target.set(0, centerOffsetY, 0);
-        }
+        // 已移除 updateCentering 函式
 
         // --- 新增：隨機設定相機發射位置的輔助函式 ---
         function setRandomLaunchPosition() {
@@ -595,11 +584,11 @@
             
             // 轉換為笛卡兒座標 (X, Y, Z)
             camera.position.x = r * Math.sin(phi) * Math.cos(theta);
-            camera.position.y = r * Math.sin(phi) * Math.sin(theta); // 這裡只設定起始點，不需要偏移
+            camera.position.y = r * Math.sin(phi) * Math.sin(theta);
             camera.position.z = r * Math.cos(phi);
             
-            // 確保相機一開始就看著(偏移後的)中心
-            camera.lookAt(0, centerOffsetY, 0);
+            // 確保相機一開始就看著中心
+            camera.lookAt(0, 0, 0); // 回復為看 0,0,0
         }
 
         const params = {
@@ -657,8 +646,8 @@
                 
                 // 2. 暫時鎖定控制器
                 controls.enabled = false;
-                // 確保目標點歸零 (加上偏移)
-                controls.target.set(0, centerOffsetY, 0);
+                // 確保目標點歸零
+                controls.target.set(0, 0, 0); // 回復為 0,0,0
                 
                 // 3. 開啟動畫旗標
                 isIntroAnimation = true;
@@ -699,12 +688,9 @@
             controls.minPolarAngle = Math.PI * 0.25;
             controls.enableTouch = true;
 
-            // 計算初始中心偏移
-            updateCentering();
-            
-            // 修正：先設定到標準位置 (0, centerOffsetY, 150)，讓 Controls 記住這個是 "Home"
-            camera.position.set(0, centerOffsetY, 150);
-            camera.lookAt(0, centerOffsetY, 0);
+            // 修正：先設定到標準位置 (0, 0, 150)，讓 Controls 記住這個是 "Home"
+            camera.position.set(0, 0, 150); // 回復為 0,0,150
+            camera.lookAt(0, 0, 0); // 回復為看 0,0,0
 
             renderer = new THREE.WebGLRenderer({ 
                 antialias: false, 
@@ -850,7 +836,7 @@
 
                 // 修正：不呼叫 reset，只鎖定並歸零目標
                 controls.enabled = false; 
-                controls.target.set(0, centerOffsetY, 0);
+                controls.target.set(0, 0, 0); // 回復為 0,0,0
                 
                 isIntroAnimation = true; // 重新啟動穿梭動畫旗標
 
@@ -1278,8 +1264,8 @@
             composer.setSize(window.innerWidth, window.innerHeight);
             if(material) material.uniforms.uPixelRatio.value = renderer.getPixelRatio();
             
-            // 視窗變動時重新計算中心偏移
-            updateCentering();
+            // 視窗變動時重新計算中心偏移 (已移除此功能)
+            // updateCentering();
         }
 
         function animate() {
@@ -1293,7 +1279,6 @@
             // 處理手動爆破的衰減與維持
             if (isHoldingExplode) {
                 // 長按時，強度維持在 1.0 (使用時間差讓過渡更平滑)
-                // 原本是每幀 0.1，假設 60fps，每秒約 6.0
                 // 使用 lerp: current = current + (target - current) * (1 - exp(-decay * dt))
                 const decay = 5.0;
                 manualExplosionStrength += (1.0 - manualExplosionStrength) * (1.0 - Math.exp(-decay * dt));
@@ -1320,14 +1305,10 @@
             if (isIntroAnimation) {
                 // 目標位置
                 const targetX = 0;
-                const targetY = centerOffsetY; // 使用更新後的偏移量
+                const targetY = 0; // 回復為 0
                 const targetZ = 150;
 
                 // --- 關鍵修正：將速度改為與時間掛鉤 ---
-                // 我們希望的動畫時長約為 18-20 秒。
-                // 之前的 0.0055 是基於 60fps 的每幀係數。
-                // 公式：factor = 1 - Math.pow(1 - oldFactor, dt * 60)
-                // 這樣無論 fps 多少，效果都等同於 60fps 下的 0.0055
                 const referenceFPS = 60;
                 const baseFactor = 0.0055; 
                 const timeAdjustedSpeed = 1 - Math.pow(1 - baseFactor, dt * referenceFPS);
@@ -1338,7 +1319,7 @@
                 camera.position.z += (targetZ - camera.position.z) * timeAdjustedSpeed;
                 
                 // 飛行過程中持續對焦中心
-                camera.lookAt(0, centerOffsetY, 0);
+                camera.lookAt(0, 0, 0); // 回復為 0,0,0
 
                 // 計算與目標點的距離
                 const dist = camera.position.distanceTo(new THREE.Vector3(targetX, targetY, targetZ));
@@ -1347,7 +1328,7 @@
                 if (dist < 1.5) {
                     // 1. 強制對齊目標點
                     camera.position.set(targetX, targetY, targetZ);
-                    camera.lookAt(0, centerOffsetY, 0);
+                    camera.lookAt(0, 0, 0); // 回復為 0,0,0
                     
                     isIntroAnimation = false;
                     
