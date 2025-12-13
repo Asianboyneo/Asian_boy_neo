@@ -178,7 +178,8 @@
             justify-content: center;
             gap: 8px; /* 按鈕間距 */
             align-items: center;
-            flex-wrap: wrap; /* 允許換行以適應小螢幕 */
+            /* 修改：在電腦版保持不換行 */
+            flex-wrap: nowrap; 
         }
 
         /* 回復原本的按鈕樣式 */
@@ -200,6 +201,7 @@
             gap: 6px;
             outline: none;
             justify-content: center;
+            white-space: nowrap; /* 確保文字不換行 */
             
             backdrop-filter: none;
             box-shadow: none;
@@ -359,8 +361,30 @@
                 gap: 8px;
             }
             
-            #ui-layer p, .reset-btn, .mode-btn {
-                font-size: 0.8rem;
+            /* 修正：針對手機版按鈕進行縮小與排版調整，確保單行顯示 */
+            .ui-footer-row {
+                flex-wrap: nowrap; /* 強制不換行 */
+                gap: 4px; /* 縮小間距 */
+                justify-content: space-between; /* 均勻分佈 */
+            }
+
+            .reset-btn, .mode-btn {
+                font-size: 10px; /* 縮小字體 (約 0.65rem) */
+                padding: 6px 4px; /* 縮小內距 */
+                letter-spacing: 0; /* 減少字距 */
+                flex-shrink: 1; /* 允許空間不足時縮小 */
+                min-width: 0;
+            }
+
+            /* 確保圖示與文字的間距也縮小 */
+            .reset-btn i, .mode-btn i {
+                margin-right: 2px;
+            }
+
+            /* 音樂按鈕只有圖示，不需要縮太多，但防止被擠壓 */
+            #btn-music {
+                flex-shrink: 0;
+                padding: 6px 8px;
             }
             
             .divider {
@@ -416,8 +440,8 @@
 
     <div id="loading">Initializing Quantum Field...<br><span style="font-size:0.7em; opacity:0.6; letter-spacing: 1px;">Awaiting Input</span></div>
 
-    <!-- 加入音訊元素 -->
-    <audio id="bg-music" loop>
+    <!-- 加入音訊元素 (已移除 loop 屬性) -->
+    <audio id="bg-music">
         <source src="Artlist Musical Logos - Tribal Rhythm.mp3" type="audio/mpeg">
     </audio>
 
@@ -440,17 +464,12 @@
             </a>
         </div>
         
-        <!-- 底部區域：照片模式切換 (左) + 音樂 + Reset + Explosion -->
+        <!-- 底部區域：照片模式切換 (左) + Reset 按鈕 (中) + Explosion 按鈕 (右) + 音樂 (最右) -->
         <div class="ui-footer-row">
             <button id="btn-mode-toggle" class="mode-btn">
                 <i class="fas fa-image"></i> Photo Mode
             </button>
             
-            <!-- 新增：音樂控制按鈕 -->
-            <button id="btn-music" class="reset-btn" title="Toggle Music">
-                <i class="fas fa-volume-mute"></i>
-            </button>
-
             <button id="btn-reset" class="reset-btn" title="Reset View">
                 <i class="fas fa-sync-alt"></i> Reset
             </button>
@@ -458,6 +477,11 @@
             <!-- 新增的 Explosion 按鈕 -->
             <button id="btn-explode" class="reset-btn" title="Trigger Explosion">
                 <i class="fas fa-bomb"></i> Explosion
+            </button>
+
+            <!-- 音樂控制按鈕 (移至最右邊) -->
+            <button id="btn-music" class="reset-btn" title="Toggle Music">
+                <i class="fas fa-volume-mute"></i>
             </button>
         </div>
     </div>
@@ -842,10 +866,21 @@
 
             // --- 新增：綁定音樂按鈕 ---
             const musicBtn = document.getElementById('btn-music');
+            const audio = document.getElementById('bg-music');
+
+            // 監聽音樂結束事件：當音樂播完時，更新按鈕狀態
+            if (audio) {
+                audio.addEventListener('ended', () => {
+                    if (musicBtn) {
+                        musicBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                        musicBtn.classList.remove('active-music');
+                    }
+                });
+            }
+
             if (musicBtn) {
                 musicBtn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const audio = document.getElementById('bg-music');
                     if (audio) {
                         if (audio.paused) {
                             playMusic(); // 播放
@@ -1232,8 +1267,8 @@
                 const targetZ = 150;
 
                 // 平滑移動相機 (X, Y, Z 都要動)
-                // 修改處：將速度調整為 0.0065，使動畫時間約為 18-19 秒
-                const speed = 0.0065;
+                // 修改處：將速度調整為 0.0055，使動畫時間約為 20-21 秒
+                const speed = 0.0055;
                 camera.position.x += (targetX - camera.position.x) * speed;
                 camera.position.y += (targetY - camera.position.y) * speed;
                 camera.position.z += (targetZ - camera.position.z) * speed;
