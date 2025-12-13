@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <!-- iOS 視口優化 -->
+    <!-- iOS 視口優化：viewport-fit=cover 是關鍵，讓內容延伸到瀏海區 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Cosmic Particles (Unified Space Glass UI)</title>
     
@@ -21,11 +21,18 @@
             -webkit-user-select: none;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+
+            /* --- 關鍵修正：鎖定 Body 防止手機瀏覽器滾動回彈與工具列遮擋 --- */
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overscroll-behavior: none;
         }
         
         #canvas-container {
             width: 100vw;
             height: 100vh;
+            /* 使用 dvh (Dynamic Viewport Height) 應對手機瀏覽器網址列伸縮 */
             height: 100dvh; 
             position: absolute;
             top: 0;
@@ -46,7 +53,8 @@
 
         /* --- 太空毛玻璃 UI 核心設計 (左下角面板) --- */
         #ui-layer {
-            position: absolute;
+            /* --- 關鍵修正：使用 fixed 定位，確保 UI 永遠浮在視窗之上，不被工具列遮擋 --- */
+            position: fixed; 
             bottom: 30px;
             left: 20px;
             max-width: 350px;
@@ -75,7 +83,7 @@
             
             transition: transform 0.3s ease, opacity 0.3s ease;
             
-            /* 新增：讓整個容器內的文字預設置中 */
+            /* 讓整個容器內的文字預設置中 */
             text-align: center;
         }
         
@@ -95,7 +103,6 @@
             -webkit-text-fill-color: transparent;
             position: relative;
             padding-bottom: 12px;
-            /* 新增：標題置中 */
             text-align: center;
         }
         
@@ -103,7 +110,6 @@
             content: '';
             position: absolute;
             bottom: 0;
-            /* 修改：底線置中 */
             left: 50%;
             transform: translateX(-50%);
             width: 40px;
@@ -118,7 +124,6 @@
             gap: 10px;
             margin-bottom: 15px; 
             pointer-events: auto; 
-            /* 修改：按鈕列置中 */
             justify-content: center;
         }
 
@@ -150,71 +155,52 @@
         .social-btn:hover .fa-threads { color: #fff; } 
         .social-btn:hover .fa-mug-hot { color: #13C3FF; } 
 
-        /* --- 新增：模式切換按鈕區域 --- */
-        .mode-toggle-row {
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .mode-btn {
-            background: rgba(165, 180, 252, 0.1);
-            border: 1px solid rgba(165, 180, 252, 0.4);
-            color: #a5b4fc;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: inherit;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            outline: none;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .mode-btn:hover {
-            background: rgba(165, 180, 252, 0.25);
-            color: #fff;
-            box-shadow: 0 0 15px rgba(165, 180, 252, 0.3);
-            transform: translateY(-1px);
-        }
-        
-        .mode-btn.active-photo {
-            background: rgba(255, 255, 255, 0.9);
-            color: #000;
-            border-color: #fff;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-        }
-
         /* --- 底部資訊與按鈕列 --- */
         .ui-footer-row {
             margin-top: 12px;
             padding-top: 10px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
-            /* 修改：將原本的 space-between 改為 center 並加上間距，使其置中 */
             justify-content: center;
-            gap: 20px;
+            gap: 12px; /* 稍微縮小間距以容納長按鈕 */
             align-items: center;
         }
 
-        .view-count-container {
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.6);
+        /* 模式切換按鈕 (已調整為底部樣式) */
+        .mode-btn {
+            background: transparent;
+            border: 1px solid rgba(165, 180, 252, 0.4);
+            color: #a5b4fc;
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             display: flex;
             align-items: center;
+            gap: 6px;
+            outline: none;
+            justify-content: center;
+            /* 移除原本的寬度設定，改為自適應 */
+        }
+
+        .mode-btn:hover {
+            background: rgba(165, 180, 252, 0.15);
+            color: #fff;
+            border-color: #a5b4fc;
+            box-shadow: 0 0 12px rgba(165, 180, 252, 0.3);
+            transform: translateY(-1px);
         }
         
-        .view-count-num {
-            color: #a5b4fc;
-            font-weight: 600;
-            margin-left: 6px;
-            text-shadow: 0 0 8px rgba(165, 180, 252, 0.4);
+        .mode-btn.active-photo {
+            background: rgba(165, 180, 252, 0.25);
+            color: #fff;
+            border-color: #fff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
         }
 
         /* Reset 按鈕樣式 */
@@ -235,7 +221,7 @@
             align-items: center;
             gap: 6px;
             outline: none;
-            pointer-events: auto; /* 確保按鈕可點擊 */
+            pointer-events: auto; 
         }
 
         .reset-btn:hover {
@@ -358,7 +344,11 @@
         /* --- 手機版響應式優化 --- */
         @media (max-width: 600px) {
             #ui-layer {
-                bottom: 20px;
+                /* 針對手機版的底部定位修正
+                   env(safe-area-inset-bottom) 是為了 iPhone X 之後的 Home Bar 預留空間
+                   當瀏覽器工具列出現時，fixed 定位會自動根據新的視窗底部調整
+                */
+                bottom: 20px; 
                 bottom: calc(20px + env(safe-area-inset-bottom));
                 left: 10px;
                 width: calc(100% - 20px);
@@ -383,7 +373,7 @@
                 gap: 8px;
             }
             
-            #ui-layer p, .view-count-container, .reset-btn {
+            #ui-layer p, .reset-btn, .mode-btn {
                 font-size: 0.8rem;
             }
             
@@ -396,22 +386,17 @@
             .lil-gui.autoPlace {
                 top: 10px !important;
                 right: 10px !important;
-                /* 移除嚴格的 160px 寬度限制，改為自適應或較寬的固定值 */
                 max-width: calc(100vw - 20px) !important;
                 width: auto !important;
             }
             
             .lil-gui {
-                /* 增加內部寬度，避免文字重疊 (原為 160px) */
                 --width: 260px;
                 font-size: 13px;
-                /* 增加觸控高度 */
                 --widget-height: 28px;
-                
-                /* 防止面板過長遮擋到底部 UI */
                 max-height: 50vh;
                 overflow-y: auto;
-                -webkit-overflow-scrolling: touch; /* iOS 順暢捲動 */
+                -webkit-overflow-scrolling: touch; 
             }
             
             .lil-gui .title {
@@ -431,7 +416,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
-    <!-- Import Map for Three.js and Firebase -->
+    <!-- Import Map for Three.js -->
     <script type="importmap">
         {
             "imports": {
@@ -464,18 +449,11 @@
             </a>
         </div>
         
-        <!-- 新增：照片/粒子模式切換按鈕 -->
-        <div class="mode-toggle-row">
+        <!-- 底部區域：照片模式切換 (左) + Reset 按鈕 (右) -->
+        <div class="ui-footer-row">
             <button id="btn-mode-toggle" class="mode-btn">
                 <i class="fas fa-image"></i> Switch to Photo Mode
             </button>
-        </div>
-        
-        <!-- 底部區域：瀏覽次數 (左) + Reset 按鈕 (右) -->
-        <div class="ui-footer-row">
-            <div class="view-count-container">
-                <i class="fas fa-eye" style="margin-right: 5px;"></i> Views: <span id="view-counter" class="view-count-num">---</span>
-            </div>
             
             <button id="btn-reset" class="reset-btn" title="Reset View">
                 <i class="fas fa-sync-alt"></i> Reset
@@ -497,10 +475,7 @@
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-        // Firebase Imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // 移除 Firebase 相關引用
 
         // --- 全局變量 ---
         let scene, camera, renderer, composer, controls;
@@ -609,7 +584,7 @@
         let pinchStrength = 0;
 
         init();
-        initFirebase();
+        // initFirebase(); // 已移除 Firebase 統計功能
         initUI();
         initMediaPipe();
         initFileUpload();
@@ -642,7 +617,7 @@
 
             const renderScene = new RenderPass(scene, camera);
             const bloomPass = new UnrealBloomPass(
-                new THREE.Vector2(window.innerWidth / 2, window.innerHeight / 2), 
+                new THREE.Vector2(window.innerWidth / window.innerHeight / 2, window.innerHeight / 2), 
                 1.5, 0.4, 0.85
             );
             bloomPass.strength = params.bloomStrength;
@@ -678,52 +653,6 @@
                 const loading = document.getElementById('loading');
                 if(loading) loading.style.opacity = 0;
             }, 1500);
-        }
-
-        async function initFirebase() {
-            if (typeof __firebase_config === 'undefined') {
-                console.warn("Firebase config not found. View counter disabled.");
-                document.getElementById('view-counter').textContent = "Offline";
-                return;
-            }
-            
-            const firebaseConfig = JSON.parse(__firebase_config);
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                
-                const statsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'site_stats');
-                const viewDocRef = doc(statsCollection, 'view_counter');
-
-                const docSnap = await getDoc(viewDocRef);
-                
-                if (docSnap.exists()) {
-                    await updateDoc(viewDocRef, { count: increment(1) });
-                } else {
-                    await setDoc(viewDocRef, { count: 1 });
-                }
-
-                onSnapshot(viewDocRef, (doc) => {
-                    if (doc.exists()) {
-                        const count = doc.data().count;
-                        document.getElementById('view-counter').textContent = count.toLocaleString();
-                    }
-                }, (error) => {
-                    console.error("Error watching views:", error);
-                });
-
-            } catch (error) {
-                console.error("Firebase initialization error:", error);
-                document.getElementById('view-counter').textContent = "Error";
-            }
         }
 
         function loadDefaultImage() {
@@ -1085,8 +1014,6 @@
             }
 
             particles = new THREE.Points(geometry, material);
-            // 注意：這裡不直接 add(particles)，改為根據模式判斷
-            particles.visible = !isPhotoMode; 
             scene.add(particles);
         }
 
@@ -1225,14 +1152,12 @@
                 controls.update();
 
                 if (handPresent) {
-                    // 粒子模式下才允許手勢旋轉粒子
-                    if(particles && !isPhotoMode) {
+                    if(particles) {
                         particles.rotation.y += (targetRotationY - particles.rotation.y) * 0.08;
                         particles.rotation.x += (targetRotationX - particles.rotation.x) * 0.08;
                     }
                     camera.position.z += (targetCameraZ - camera.position.z) * 0.04;
                 } else {
-                    // 粒子模式下才自動旋轉
                     if(particles && params.floating && !isPhotoMode) {
                         const speed = params.floatSpeed;
                         const targetX = Math.sin(time * 0.3 * speed) * 0.15;
