@@ -53,10 +53,12 @@
 
         /* --- 太空毛玻璃 UI 核心設計 (左下角面板) --- */
         #ui-layer {
-            /* --- 關鍵修正：使用 fixed 定位，確保 UI 永遠浮在視窗之上，不被工具列遮擋 --- */
+            /* --- 通用/電腦版設定：靠左下方 --- */
             position: fixed; 
             bottom: 30px;
-            left: 20px;
+            left: 20px; /* 電腦版：靠左 */
+            transform: none; /* 電腦版：不進行位移修正 */
+            
             max-width: 350px;
             width: calc(100% - 40px);
             
@@ -81,7 +83,7 @@
                 0 10px 40px rgba(0, 0, 0, 0.4),
                 inset 0 0 0 1px rgba(255, 255, 255, 0.05);
             
-            transition: transform 0.3s ease, opacity 0.3s ease;
+            transition: opacity 0.3s ease;
             
             /* 讓整個容器內的文字預設置中 */
             text-align: center;
@@ -341,17 +343,18 @@
             padding-top: 12px;
         }
 
-        /* --- 手機版響應式優化 --- */
+        /* --- 手機版響應式優化 (小於 600px) --- */
         @media (max-width: 600px) {
             #ui-layer {
-                /* 針對手機版的底部定位修正
-                   env(safe-area-inset-bottom) 是為了 iPhone X 之後的 Home Bar 預留空間
-                   當瀏覽器工具列出現時，fixed 定位會自動根據新的視窗底部調整
-                */
+                /* 手機版：完美置中靠下 */
+                left: 50%;
+                transform: translateX(-50%);
+                
+                /* 底部安全距離 */
                 bottom: 20px; 
                 bottom: calc(20px + env(safe-area-inset-bottom));
-                left: 10px;
-                width: calc(100% - 20px);
+                
+                width: 92%; /* 寬度稍微撐開 */
                 padding: 15px;            
                 border-radius: 16px;
             }
@@ -452,7 +455,7 @@
         <!-- 底部區域：照片模式切換 (左) + Reset 按鈕 (右) -->
         <div class="ui-footer-row">
             <button id="btn-mode-toggle" class="mode-btn">
-                <i class="fas fa-image"></i> Switch to Photo Mode
+                <i class="fas fa-image"></i> Photo Mode
             </button>
             
             <button id="btn-reset" class="reset-btn" title="Reset View">
@@ -778,7 +781,8 @@
                     isPhotoMode = !isPhotoMode;
                     
                     if (isPhotoMode) {
-                        modeBtn.innerHTML = '<i class="fas fa-cubes"></i> Switch to Particle Mode';
+                        // 修改處：切換成粒子模式的按鈕文字
+                        modeBtn.innerHTML = '<i class="fas fa-cubes"></i> Particle Mode';
                         modeBtn.classList.add('active-photo');
                         
                         // 切換為照片模式：隱藏粒子，顯示照片，減弱發光
@@ -786,7 +790,8 @@
                         if (imagePlane) imagePlane.visible = true;
                         if (composer.bloomPass) composer.bloomPass.strength = 0.2; // 微微發光即可，太強會過曝
                     } else {
-                        modeBtn.innerHTML = '<i class="fas fa-image"></i> Switch to Photo Mode';
+                        // 修改處：切換成照片模式的按鈕文字
+                        modeBtn.innerHTML = '<i class="fas fa-image"></i> Photo Mode';
                         modeBtn.classList.remove('active-photo');
                         
                         // 切換回粒子模式：顯示粒子，隱藏照片，恢復發光
