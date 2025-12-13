@@ -178,8 +178,7 @@
             justify-content: center;
             gap: 8px; /* 按鈕間距 */
             align-items: center;
-            /* 修改：在電腦版保持不換行 */
-            flex-wrap: nowrap; 
+            flex-wrap: wrap; /* 允許換行以適應小螢幕 */
         }
 
         /* 回復原本的按鈕樣式 */
@@ -202,6 +201,9 @@
             outline: none;
             justify-content: center;
             white-space: nowrap; /* 確保文字不換行 */
+            user-select: none; /* 防止長按選取文字 */
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
             
             backdrop-filter: none;
             box-shadow: none;
@@ -213,6 +215,11 @@
             border-color: #a5b4fc;
             box-shadow: 0 0 12px rgba(165, 180, 252, 0.4);
             transform: translateY(-1px);
+        }
+        
+        .mode-btn:active, .reset-btn:active {
+            transform: translateY(1px);
+            background: rgba(165, 180, 252, 0.25);
         }
         
         .mode-btn.active-photo, .reset-btn.active-music {
@@ -463,6 +470,7 @@
                 <i class="fa-solid fa-mug-hot"></i>
             </a>
         </div>
+        
         <!-- 底部區域：照片模式切換 (左) + Explosion 按鈕 + Reset 按鈕 + 音樂 (最右) -->
         <div class="ui-footer-row">
             <button id="btn-mode-toggle" class="mode-btn">
@@ -470,7 +478,7 @@
             </button>
             
             <!-- Explosion 按鈕 (已移至 Reset 左邊) -->
-            <button id="btn-explode" class="reset-btn" title="Trigger Explosion">
+            <button id="btn-explode" class="reset-btn" title="Hold to Sustain Explosion">
                 <i class="fas fa-bomb"></i> Explosion
             </button>
 
@@ -520,6 +528,8 @@
 
         // 手動爆破變數
         let manualExplosionStrength = 0;
+        // 爆破長按狀態
+        let isHoldingExplode = false;
 
         // 預設圖片路徑
         const DEFAULT_IMAGE_PATH = '287069905_564270111773809_6459526836966162411_n.jpg';
@@ -833,6 +843,8 @@
         function initUI() {
             // 綁定左下角面板的 Reset 按鈕
             const resetBtn = document.getElementById('btn-reset');
+            
+            // --- Reset 還原為單純點擊邏輯 ---
             if (resetBtn) {
                 resetBtn.addEventListener('click', (e) => {
                     e.preventDefault(); // 防止按鈕焦點殘留
@@ -843,25 +855,34 @@
 
             // 綁定 Explosion 按鈕
             const explodeBtn = document.getElementById('btn-explode');
+            
+            // 長按開始
+            const startExplode = (e) => {
+                if(e.cancelable) e.preventDefault(); 
+                
+                // 如果在照片模式，自動切回粒子模式
+                if(isPhotoMode) {
+                    const modeBtn = document.getElementById('btn-mode-toggle');
+                    if(modeBtn) modeBtn.click();
+                }
+                
+                isHoldingExplode = true;
+            };
+
+            // 長按結束
+            const endExplode = () => {
+                isHoldingExplode = false;
+                if(explodeBtn) explodeBtn.blur();
+            };
+
             if (explodeBtn) {
-                explodeBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    
-                    // 如果在照片模式，自動切回粒子模式
-                    if(isPhotoMode) {
-                        const modeBtn = document.getElementById('btn-mode-toggle');
-                        if(modeBtn) modeBtn.click();
-                    }
-
-                    // 設定爆破強度
-                    manualExplosionStrength = 1.0;
-                    
-                    // 已移除：爆破時不再自動播放音樂
-                    // const audio = document.getElementById('bg-music');
-                    // if (audio && audio.paused) playMusic();
-
-                    explodeBtn.blur();
-                });
+                // 綁定按下事件 (滑鼠/觸控)
+                explodeBtn.addEventListener('mousedown', startExplode);
+                explodeBtn.addEventListener('touchstart', startExplode, {passive: false});
+                
+                // 綁定放開事件 (全域監聽，防止滑出按鈕放開無效)
+                window.addEventListener('mouseup', endExplode);
+                window.addEventListener('touchend', endExplode);
             }
 
             // --- 新增：綁定音樂按鈕 ---
@@ -1243,11 +1264,16 @@
             requestAnimationFrame(animate);
             time += 0.01;
 
-            // 處理手動爆破的衰減
-            if (manualExplosionStrength > 0) {
-                // 修改：稍微加快衰減速度，讓回彈更有力 (彈性感)
-                manualExplosionStrength *= 0.90; 
-                if (manualExplosionStrength < 0.01) manualExplosionStrength = 0;
+            // 處理手動爆破的衰減與維持
+            if (isHoldingExplode) {
+                // 長按時，強度維持在 1.0 (或者平滑上升)
+                manualExplosionStrength += (1.0 - manualExplosionStrength) * 0.1;
+            } else {
+                // 放開時，衰減
+                if (manualExplosionStrength > 0) {
+                    manualExplosionStrength *= 0.90; 
+                    if (manualExplosionStrength < 0.01) manualExplosionStrength = 0;
+                }
             }
 
             if (material) {
